@@ -1,0 +1,17 @@
+body{
+    margin:0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: black;
+}
+#gameScreen{
+    align-self: center;
+    margin: auto;
+    height: 864px;
+}
+
+canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
