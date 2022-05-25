@@ -42,7 +42,6 @@ export default class Game{
         // this.gameScreen.style.width = document.body.style.width;
         // this.gameScreen.style.height = document.body.style.height;
         this.ctx = this.gameScreen.getContext('2d')
-        // console.log(this.ctx)
 
         this.rooms.push(new Room(0, "black", "yellow", [
                 {x: 0, y: 64, width: 8, height: 48},
@@ -119,7 +118,7 @@ export default class Game{
                 }
                 this.moveShadow()
             }
-            // console.log(this.shadowCollisionRect)
+            
             let shadowImg : HTMLImageElement = document.createElement('img')
             if(isShadowFrozen){
                 shadowImg.src = './assets/enemies/shadow/frozen' + this.shadowFreezeTime%2 + '.png'
@@ -389,9 +388,7 @@ export default class Game{
     }
 
     setNewRoom(roomId: number){
-        // console.log(this.rooms[roomId])
         this.currentRoom = this.rooms[roomId]
-        // console.log(this.currentRoom)
         this.playerSpeed = this.basicSpeed
         this.lastStartPosition = [this.playerCollisionRect.x, this.playerCollisionRect.y]
         this.placeShadow()
@@ -448,12 +445,11 @@ export default class Game{
 
     createRoomBackground(){
         this.roomBackground = [{x: 0, y: 176, width: 320, height: 32}]
-        // console.log(this.currentRoom.wallCollisionRects)
+        
         //Top left
         for(let heightBonus = 0; heightBonus < 176/2; heightBonus += 16){
             let canCreateBackground = true
             for(let wall of this.currentRoom.wallCollisionRects){
-                // console.log("a")
                 if(this.isCollisionDetected({x: 0, y: heightBonus, width: 8, height: 8}, wall)){
                     canCreateBackground = false
                     break
@@ -605,7 +601,6 @@ export default class Game{
                 break
             }
         }
-        // console.log(this.roomBackground)
     }
 
     placeShadow(){
@@ -679,7 +674,6 @@ export default class Game{
                 i++
             }
         }
-        // console.log(this.enemies)
     }
 
     placeKey(){
@@ -899,10 +893,6 @@ export default class Game{
                     break
                 }
             }
-
-            // if(enemy.color == 'red'){
-            //     console.log(horizontalDistance, verticalDistance)
-            // }
             
             if(Math.abs(horizontalDistance) > Math.abs(verticalDistance) && Math.abs(horizontalDistance) >= this.playerSpeed){
                 // if(Math.abs(horizontalDistance) >= enemy.speed)
