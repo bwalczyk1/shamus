@@ -313,6 +313,18 @@ export default class Game{
             }
         }
 
+        // Draw bullets animations
+        let newBulletsAnimations : any[] = []
+        for(let bulletAnimation of this.bulletsAnimations){
+            if(this.frame - bulletAnimation.startFrame < 4){
+                let bulletAnimationImage : HTMLImageElement = document.createElement('img')
+                bulletAnimationImage.src = './assets/bulletExplosions/' + (this.frame - bulletAnimation.startFrame) + '.png'
+                this.ctx.drawImage(bulletAnimationImage, bulletAnimation.x, bulletAnimation.y)
+                newBulletsAnimations.push(bulletAnimation)
+            }
+        }
+        this.bulletsAnimations = newBulletsAnimations
+
         // Detect bullets' collisions with shadow, walls and enemies
         let bulletsToDelete : Bullet[] = []
         let enemiesToDelete : Enemy[] = []
@@ -339,12 +351,7 @@ export default class Game{
                         if(this.isCollisionDetected(bullet.collisionRect, wall)){
                             let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
                             let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
-                            let bulletBlast : ICollisionRect = {x: bulletBlastX, y: bulletBlastY, width: 24, height: 24}
-                            for(let neighbourEnemy of this.enemies){
-                                if(this.isCollisionDetected(bulletBlast, neighbourEnemy.collisionRect) && !this.enemyArrayIncludes(enemiesToDelete, neighbourEnemy)){
-                                    enemiesToDelete.push(neighbourEnemy)
-                                }
-                            }
+                            
                             bulletsToDelete.push(bullet)
                             this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
                             break
@@ -392,18 +399,6 @@ export default class Game{
             }
         }
         this.playerBullets = newBullets
-
-        // Draw bullets animations
-        let newBulletsAnimations : any[] = []
-        for(let bulletAnimation of this.bulletsAnimations){
-            if(this.frame - bulletAnimation.startFrame < 4){
-                let bulletAnimationImage : HTMLImageElement = document.createElement('img')
-                bulletAnimationImage.src = './assets/bulletExpolsions/' + (this.frame - bulletAnimation.startFrame) + '.png'
-                this.ctx.drawImage(bulletAnimationImage, bulletAnimation.x, bulletAnimation.y)
-                newBulletsAnimations.push(bulletAnimation)
-            }
-        }
-        this.bulletsAnimations = newBulletsAnimations
 
         this.frame += 1
 
