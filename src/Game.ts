@@ -44,7 +44,7 @@ export default class Game{
         // this.gameScreen.style.height = document.body.style.height;
         this.ctx = this.gameScreen.getContext('2d')
 
-        this.rooms.push(new Room(0, "black", "yellow", [
+        this.rooms.push(new Room(10, "black", "yellow", [
                 {x: 0, y: 64, width: 8, height: 48},
                 {x: 0, y: 56, width: 56, height: 8}, 
                 {x: 48, y: 8, width: 8, height: 48},
@@ -60,7 +60,7 @@ export default class Game{
                 {x: 128, y: 56, width: 64, height: 8},
                 {x: 192, y: 56, width: 8, height: 56}
             ],[null, 1, null, null], "blue", ""))
-        this.rooms.push(new Room(1, "black", "yellow", [
+        this.rooms.push(new Room(11, "black", "yellow", [
                 {x: 320 - 8, y: 56 + 8, width: 8, height: 112 - 56 - 8},
                 {x: 0, y: 112, width: 320, height: 8},
                 {x: 0, y: 56, width: 320, height: 8}
@@ -260,7 +260,23 @@ export default class Game{
                 // this.ctx.fillRect(enemy.collisionRect.x, enemy.collisionRect.y, enemy.collisionRect.width, enemy.collisionRect.height)
                 let enemyPhase : number = this.frame % 4
                 let enemyImg = document.createElement('img')
-                enemyImg.src = './assets/enemies/drone/' +  enemy.color + '/' + enemyPhase + '.png'
+                switch(enemy.type){
+                    case 0:
+                        enemyImg.src = './assets/enemies/drone/' +  enemy.color + '/' + enemyPhase + '.png'
+                        break
+                    case 1:
+                        let droidMovementPhase : number
+                        if(enemy.movementObject.forceX != 0)
+                            droidMovementPhase = enemyPhase%2
+                        else if(enemy.movementObject.forceY != 0)
+                            droidMovementPhase = enemyPhase%2 + 1
+                        else
+                            droidMovementPhase = enemyPhase%2*2
+                        enemyImg.src = './assets/enemies/droid/' + enemy.color + '/' + enemyPhase + '_' + droidMovementPhase + '.png'
+                        break
+                    default:
+                        break
+                }
                 this.ctx.drawImage(enemyImg, enemy.collisionRect.x, enemy.collisionRect.y)   
             }
         }
@@ -303,11 +319,13 @@ export default class Game{
                 }
                 this.keys = newKeys
                 this.openingWallInterval = setInterval(()=>{
-                    this.currentRoom.wallCollisionRects[0].y += 1
-                    this.currentRoom.wallCollisionRects[0].height -= 1
-                    if(this.currentRoom.wallCollisionRects[0].height == 0){
-                        clearInterval(this.openingWallInterval)
-                        this.openingWallInterval = null
+                    if(this.currentRoom.keyHoleColor != ""){
+                        this.currentRoom.wallCollisionRects[0].y += 1
+                        this.currentRoom.wallCollisionRects[0].height -= 1
+                        if(this.currentRoom.wallCollisionRects[0].height == 0){
+                            clearInterval(this.openingWallInterval)
+                            this.openingWallInterval = null
+                        }
                     }
                 }, this.frameLength/2)
             }
@@ -655,11 +673,12 @@ export default class Game{
     }
 
     createEnemies(n : number){
+        let maxEnemyType : number = Math.floor(this.currentRoom.id/10)
+        if(maxEnemyType > 2)
+            maxEnemyType = 2
         let i : number = 0
         while(i < n){
-            let availableColors : string[] = ["red", 'green', 'blue', 'white']
-            let newEnemyColor  : string = availableColors[Math.floor(Math.random()*availableColors.length)]
-            let newEnemy : Enemy = new Enemy(newEnemyColor)
+            let newEnemy : Enemy = new Enemy(Math.floor(Math.random()*(maxEnemyType + 1)))
             newEnemy.setPosition(Math.floor(Math.random() * (320 - newEnemy.collisionRect.width)), Math.floor(Math.random() * (176 - newEnemy.collisionRect.height)))
             let isAbleToAddEnemy : boolean = true
             
@@ -861,76 +880,145 @@ export default class Game{
 
     moveEnemies(){
         for(let enemy of this.enemies){
-            // Horizontal
-            let horizontalDistance : number = this.playerCollisionRect.x - enemy.collisionRect.x
-            for(let i = 0; Math.abs(i) <= Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x); i += (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x)*enemy.speed){
-                let didHitWall = false
-                for(let wall of this.currentRoom.wallCollisionRects){
-                    if(this.isCollisionDetected({x: enemy.collisionRect.x + i, y: enemy.collisionRect.y, width: enemy.collisionRect.width, height: enemy.collisionRect.height}, wall)){
-                        didHitWall = true
-                        horizontalDistance = i - (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x)*enemy.speed
-                        break
+            if(enemy.type == 1){
+                if(this.frame - enemy.movementObject.endFrame >= 8){
+                    // Start new movement
+                    if(this.canEnemySeePlayer(enemy.collisionRect)){
+                        // Choose direction
+                        console.log('real move')
+                        let distanceX : number = (this.playerCollisionRect.x + this.playerCollisionRect.width/2) - (enemy.collisionRect.x + enemy.collisionRect.width/2)
+                        let distanceY : number = (this.playerCollisionRect.y + this.playerCollisionRect.height/2) - (enemy.collisionRect.y + enemy.collisionRect.height/2)
+                        if(Math.abs(distanceX) > Math.abs(distanceY)){
+                            enemy.movementObject.forceX = distanceX/Math.abs(distanceX)
+                        }
+                        else{
+                            enemy.movementObject.forceY = distanceY/Math.abs(distanceY)
+                        }
+                    }
+                    else{
+                        // Random direction
+                        console.log('random move')
+                        let randOfFour : number = Math.floor(Math.random() * 4)
+                        if(randOfFour%2 == 0){
+                            enemy.movementObject.forceX = randOfFour-1
+                        }
+                        else{
+                            enemy.movementObject.forceY = randOfFour - 2
+                        }
+                    }
+                    enemy.movementObject.endFrame = this.frame + 48/enemy.speed
+                }
+                else if(this.frame == enemy.movementObject.endFrame){
+                    // Reset movement forces
+                    enemy.movementObject.forceX = 0
+                    enemy.movementObject.forceY = 0
+                }
+                else if(this.frame < enemy.movementObject.endFrame){
+                    // Move if possible
+                    let ableToMove : boolean = true
+                    let newCollisionRect : ICollisionRect = {x: enemy.collisionRect.x + enemy.movementObject.forceX*enemy.speed, y: enemy.collisionRect.y + enemy.movementObject.forceY*enemy.speed, width: enemy.collisionRect.width, height: enemy.collisionRect.height}
+                    if(newCollisionRect.x < 0 || newCollisionRect.y < 0 || newCollisionRect.x + newCollisionRect.width > 320 || newCollisionRect.y + newCollisionRect.height > 176){
+                        ableToMove = false
+                    }
+                    if(ableToMove){
+                        for(let otherEnemy of this.enemies){
+                            if(!otherEnemy.equals(enemy) && this.isCollisionDetected(otherEnemy.collisionRect, newCollisionRect)){
+                                ableToMove = false
+                                break
+                            }
+                        }
+                    }
+                    if(ableToMove){
+                        for(let wall of this.currentRoom.wallCollisionRects){
+                            if(this.isCollisionDetected(newCollisionRect, wall)){
+                                ableToMove = false
+                                break
+                            }
+                        }
+                    }
+                    if(ableToMove){
+                        enemy.collisionRect = newCollisionRect
+                    }
+                    else{
+                        // Stop movement
+                        enemy.movementObject.forceX = 0
+                        enemy.movementObject.forceY = 0
+                        enemy.movementObject.endFrame = this.frame
                     }
                 }
-                if(!didHitWall){
-                    for(let encounteredEnemmy of this.enemies){
-                        if(!enemy.equals(encounteredEnemmy) && this.isCollisionDetected({x: enemy.collisionRect.x + i, y: enemy.collisionRect.y, width: enemy.collisionRect.width, height: enemy.collisionRect.height}, encounteredEnemmy.collisionRect)){
+            }
+            else{
+                // Horizontal
+                let horizontalDistance : number = this.playerCollisionRect.x - enemy.collisionRect.x
+                for(let i = 0; Math.abs(i) <= Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x); i += (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x)*enemy.speed){
+                    let didHitWall = false
+                    for(let wall of this.currentRoom.wallCollisionRects){
+                        if(this.isCollisionDetected({x: enemy.collisionRect.x + i, y: enemy.collisionRect.y, width: enemy.collisionRect.width, height: enemy.collisionRect.height}, wall)){
                             didHitWall = true
                             horizontalDistance = i - (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x)*enemy.speed
                             break
                         }
                     }
-                }
-                if(didHitWall){
-                    break
-                }
-            }
-            
-            // Vertical
-            let verticalDistance : number = this.playerCollisionRect.y - enemy.collisionRect.y
-            for(let i = 0; Math.abs(i) <= Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y); i += (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y)*enemy.speed){
-                let didHitWall = false
-                for(let wall of this.currentRoom.wallCollisionRects){
-                    if(this.isCollisionDetected({x: enemy.collisionRect.x, y: enemy.collisionRect.y + i, width: enemy.collisionRect.width, height: enemy.collisionRect.height}, wall)){
-                        didHitWall = true
-                        verticalDistance = i - (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y)*enemy.speed
+                    if(!didHitWall){
+                        for(let encounteredEnemmy of this.enemies){
+                            if(!enemy.equals(encounteredEnemmy) && this.isCollisionDetected({x: enemy.collisionRect.x + i, y: enemy.collisionRect.y, width: enemy.collisionRect.width, height: enemy.collisionRect.height}, encounteredEnemmy.collisionRect)){
+                                didHitWall = true
+                                horizontalDistance = i - (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x)*enemy.speed
+                                break
+                            }
+                        }
+                    }
+                    if(didHitWall){
                         break
                     }
                 }
-                if(!didHitWall){
-                    for(let encounteredEnemmy of this.enemies){
-                        if(!enemy.equals(encounteredEnemmy) && this.isCollisionDetected({x: enemy.collisionRect.x, y: enemy.collisionRect.y + i, width: enemy.collisionRect.width, height: enemy.collisionRect.height}, encounteredEnemmy.collisionRect)){
+                
+                // Vertical
+                let verticalDistance : number = this.playerCollisionRect.y - enemy.collisionRect.y
+                for(let i = 0; Math.abs(i) <= Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y); i += (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y)*enemy.speed){
+                    let didHitWall = false
+                    for(let wall of this.currentRoom.wallCollisionRects){
+                        if(this.isCollisionDetected({x: enemy.collisionRect.x, y: enemy.collisionRect.y + i, width: enemy.collisionRect.width, height: enemy.collisionRect.height}, wall)){
                             didHitWall = true
                             verticalDistance = i - (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y)*enemy.speed
                             break
                         }
                     }
+                    if(!didHitWall){
+                        for(let encounteredEnemmy of this.enemies){
+                            if(!enemy.equals(encounteredEnemmy) && this.isCollisionDetected({x: enemy.collisionRect.x, y: enemy.collisionRect.y + i, width: enemy.collisionRect.width, height: enemy.collisionRect.height}, encounteredEnemmy.collisionRect)){
+                                didHitWall = true
+                                verticalDistance = i - (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y)*enemy.speed
+                                break
+                            }
+                        }
+                    }
+                    if(didHitWall){
+                        break
+                    }
                 }
-                if(didHitWall){
-                    break
+                
+                if(Math.abs(horizontalDistance) > Math.abs(verticalDistance) && Math.abs(horizontalDistance) >= this.playerSpeed){
+                    // if(Math.abs(horizontalDistance) >= enemy.speed)
+                        enemy.collisionRect.x += (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x) * enemy.speed
+                    // else
+                    //     enemy.collisionRect.x += Math.floor(horizontalDistance)
                 }
-            }
-            
-            if(Math.abs(horizontalDistance) > Math.abs(verticalDistance) && Math.abs(horizontalDistance) >= this.playerSpeed){
-                // if(Math.abs(horizontalDistance) >= enemy.speed)
-                    enemy.collisionRect.x += (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x) * enemy.speed
-                // else
-                //     enemy.collisionRect.x += Math.floor(horizontalDistance)
-            }
-            else if(Math.abs(verticalDistance) >= this.playerSpeed){
-                // if(Math.abs(verticalDistance) >= enemy.speed)
-                    enemy.collisionRect.y += (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y) * enemy.speed
-                // else
-                //     enemy.collisionRect.y += Math.floor(verticalDistance)
+                else if(Math.abs(verticalDistance) >= this.playerSpeed){
+                    // if(Math.abs(verticalDistance) >= enemy.speed)
+                        enemy.collisionRect.y += (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y) * enemy.speed
+                    // else
+                    //     enemy.collisionRect.y += Math.floor(verticalDistance)
+                }    
             }
         }
     }
 
-    isNumberBetween(n : number, min: number, max: number){
+    isNumberBetween(n : number, min: number, max: number) : boolean{
         return n >=min && n <= max
     }
 
-    isCollisionDetected(cr1 : ICollisionRect, cr2 : ICollisionRect){
+    isCollisionDetected(cr1 : ICollisionRect, cr2 : ICollisionRect) : boolean{
         if(cr1.x + cr1.width > cr2.x 
             && cr1.x < cr2.x + cr2.width 
             && cr1.y + cr1.height > cr2.y 
@@ -942,7 +1030,42 @@ export default class Game{
         }
     }
 
-    enemyArrayIncludes(enemyArray : Enemy[], enemyToCheck : Enemy){
+    canEnemySeePlayer(enemyCollisionRect : ICollisionRect) : boolean{
+        let enemyPoint : number[] = [enemyCollisionRect.x + enemyCollisionRect.width/2, enemyCollisionRect.y + enemyCollisionRect.height/2]
+        let playerPoint : number[] = [this.playerCollisionRect.x + this.playerCollisionRect.width/2, this.playerCollisionRect.y + this.playerCollisionRect.height/2]
+        let wallPoint1, wallPoint2 : number[]
+        for(let wall of this.currentRoom.wallCollisionRects){
+            wallPoint1 = [wall.x, wall.y]
+            wallPoint2 = [wall.x + wall.width, wall.y + wall.height]
+            if(this.isIntersectionDetected(enemyPoint, playerPoint, wallPoint1, wallPoint2))
+                return false
+        }
+
+        return true
+    }
+
+    isIntersectionDetected(A : number[], B : number[], C : number[], D : number[]) : boolean{
+        let v1 : number = this.vectorProduct(C, D, A)
+        let v2 : number = this.vectorProduct(C, D, B)
+        let v3 : number = this.vectorProduct(A, B, C)
+        let v4 : number = this.vectorProduct(A, B, D)
+
+        if((v1>0&&v2<0||v1<0&&v2>0)&&(v3>0&&v4<0||v3<0&&v4>0)) 
+            return true
+
+        return false
+    }
+
+    vectorProduct(X: number[], Y: number[], Z: number[]) : number{
+        let x1 : number = Z[0] - X[0]
+        let y1 : number = Z[1] - X[1]
+        let x2 : number =  Y[0] - X[0]
+        let y2 : number = Y[1] - X[1]
+
+        return x1*y2 - x2*y1
+    }
+
+    enemyArrayIncludes(enemyArray : Enemy[], enemyToCheck : Enemy) : boolean{
         for(let enemy of enemyArray){
             if(enemyToCheck.equals(enemy))
                 return true
@@ -950,7 +1073,7 @@ export default class Game{
         return false
     }
 
-    bulletArrayIncludes(bulletArray : Bullet[], bulletToCheck : Bullet){
+    bulletArrayIncludes(bulletArray : Bullet[], bulletToCheck : Bullet) : boolean{
         for(let bullet of bulletArray){
             if(bulletToCheck.id == bullet.id)
                 return true
