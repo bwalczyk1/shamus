@@ -919,7 +919,7 @@ export default class Game{
             else if(enemy.type == 1){
                 if(this.frame - enemy.movementObject.endFrame >= 8){
                     // Start new movement
-                    if(this.canEnemySeePlayer(enemy.collisionRect)){
+                    if(this.canEnemySeePlayer(enemy)){
                         // Choose direction
                         console.log('real move')
                         let distanceX : number = (this.playerCollisionRect.x + this.playerCollisionRect.width/2) - (enemy.collisionRect.x + enemy.collisionRect.width/2)
@@ -1065,8 +1065,8 @@ export default class Game{
         return true
     }
 
-    canEnemySeePlayer(enemyCollisionRect : ICollisionRect) : boolean{
-        let enemyPoint : number[] = [enemyCollisionRect.x + enemyCollisionRect.width/2, enemyCollisionRect.y + enemyCollisionRect.height/2]
+    canEnemySeePlayer(enemy : Enemy) : boolean{
+        let enemyPoint : number[] = [enemy.collisionRect.x + enemy.collisionRect.width/2, enemy.collisionRect.y + enemy.collisionRect.height/2]
         let playerPoint : number[] = [this.playerCollisionRect.x + this.playerCollisionRect.width/2, this.playerCollisionRect.y + this.playerCollisionRect.height/2]
         let wallPoint1, wallPoint2 : number[]
         for(let wall of this.currentRoom.wallCollisionRects){
@@ -1077,6 +1077,61 @@ export default class Game{
         }
 
         return true
+    }
+
+    canEnemyShootPlayer(enemy : Enemy){
+        // [Finish]
+        let forceX : number = 0
+        let forceY : number = 0
+        let enemyCenterX : number = enemy.collisionRect.x + enemy.collisionRect.width/2
+        let enemyCenterY : number = enemy.collisionRect.y + enemy.collisionRect.height/2
+        
+        if((enemyCenterX < this.playerCollisionRect.x || enemyCenterX > this.playerCollisionRect.x + enemy.collisionRect.width)
+            && (enemyCenterY < this.playerCollisionRect.y || enemyCenterY > this.playerCollisionRect.y + enemy.collisionRect.height))
+            return false
+
+        if(!this.canEnemySeePlayer(enemy))
+            return false
+
+        let playerPointX : number
+        let playerPointY : number
+
+        if(enemyCenterX >= this.playerCollisionRect.x && enemyCenterX <= this.playerCollisionRect.x + this.playerCollisionRect.width){
+            playerPointX = enemyCenterX
+            playerPointY = this.playerCollisionRect.y + this.playerCollisionRect.height/2
+        }
+        else if(enemyCenterY >= this.playerCollisionRect.y && enemyCenterY <= this.playerCollisionRect.y + this.playerCollisionRect.height/2){
+            playerPointY = enemyCenterY
+            playerPointX = this.playerCollisionRect.x + this.playerCollisionRect.width/2
+        }
+        // ALL WRONG
+        // Use difference instead of quotient
+        // else if(enemyCenterX/enemyCenterY >= this.playerCollisionRect.x/(this.playerCollisionRect.y + this.playerCollisionRect.height/2) 
+        //     && enemyCenterX/enemyCenterY <= (this.playerCollisionRect.x + this.playerCollisionRect.width/2)/this.playerCollisionRect.y){
+        //         let xCandidate : number = this.playerCollisionRect.x
+        //         let yCandidate : number = this.playerCollisionRect.y + this.playerCollisionRect.height
+        //         while(xCandidate/yCandidate != enemyCenterX/enemyCenterY){
+        //             xCandidate += 1
+        //             yCandidate += this.playerCollisionRect.height/this.playerCollisionRect.width
+        //         }
+        //         playerPointX = xCandidate
+        //         playerPointY = yCandidate
+        // }
+        // else if()
+        else{
+            return false
+        }
+        forceX = (playerPointX - enemyCenterX)/Math.abs(playerPointX - enemyCenterX)
+        forceY = (playerPointY - enemyCenterY)/Math.abs(playerPointY - enemyCenterY)
+
+
+
+        for(let otherEnemy of this.enemies){
+            if(!otherEnemy.equals(enemy)){
+
+            }
+            
+        }
     }
 
     isIntersectionDetected(A : number[], B : number[], C : number[], D : number[]) : boolean{
