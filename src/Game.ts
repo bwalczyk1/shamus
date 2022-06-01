@@ -4,15 +4,16 @@ import ICollisionRect from "./ICollisionRect"
 import Room from "./Room"
 
 export default class Game{
-    gameScreen : HTMLCanvasElement 
+    gameScreen : HTMLCanvasElement
     ctx : CanvasRenderingContext2D
     frame : number = 0
+    animationFrame : number = 0
     frameLength : number = 100
     rooms : Room[] = []
     currentRoom : Room
     playerCollisionRect : ICollisionRect = {x: 0, y: 0, width: 14, height: 17}
     shadowCollisionRect : ICollisionRect = {x : 0, y: 0, width: 18, height: 15}
-    basicSpeed : number = 5
+    basicSpeed : number = 1
     playerSpeed : number = this.basicSpeed
     shadowSpeed : number = 7
     shadowFreezeTime : number = 0
@@ -43,6 +44,7 @@ export default class Game{
         // this.gameScreen.style.width = document.body.style.width;
         // this.gameScreen.style.height = document.body.style.height;
         this.ctx = this.gameScreen.getContext('2d')
+        this.ctx.imageSmoothingEnabled = false
 
         this.rooms.push(new Room(10, "black", "yellow", [
                 {x: 0, y: 64, width: 8, height: 48},
@@ -60,7 +62,7 @@ export default class Game{
                 {x: 128, y: 56, width: 64, height: 8},
                 {x: 192, y: 56, width: 8, height: 56}
             ],[null, 1, null, null], "blue", ""))
-        this.rooms.push(new Room(11, "black", "yellow", [
+        this.rooms.push(new Room(21, "black", "yellow", [
                 {x: 320 - 8, y: 56 + 8, width: 8, height: 112 - 56 - 8},
                 {x: 0, y: 112, width: 320, height: 8},
                 {x: 0, y: 56, width: 320, height: 8}
@@ -73,14 +75,13 @@ export default class Game{
         
         document.addEventListener("keydown", (event) => {this.playerDetectAction(event)})
         document.addEventListener("keyup", (event)=> {this.playerStopAction(event)})
-        setInterval(() => {this.refreshScreen()}, this.frameLength)
-        // requestAnimationFrame(()=>{this.refreshScreen()})
+        // setInterval(() => {this.refreshScreen()}, this.frameLength)
+        window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
-    refreshScreen(){
+    async refreshScreen(){
         console.log(this.playerCollisionRect.x)
         this.ctx = this.gameScreen.getContext('2d')
-        this.ctx.imageSmoothingEnabled = false
         this.ctx.clearRect(0, 0, 320, 208)
         // this.ctx.fillStyle = "black"
         // this.ctx.fillRect(0, 0, 320, 208)
@@ -105,7 +106,7 @@ export default class Game{
         if(Date.now() - this.timeOfEnteringRoom >= 15000){
             let isShadowFrozen : boolean = (Date.now() - this.shadowFreezeTime <= 2500)
             let isShadowInMmove = Date.now() - this.timeOfEnteringRoom >= 17500
-            if(isShadowInMmove && !isShadowFrozen){
+            if(isShadowInMmove && !isShadowFrozen && this.canReallyAnimate()){
                 let newX, newY : number
                 if(this.frame%2 == 1){
                     newX = this.shadowCollisionRect.x - 2
@@ -247,7 +248,11 @@ export default class Game{
         this.ctx.drawImage(playerImg, this.playerCollisionRect.x, this.playerCollisionRect.y)
         
         // Move enemies
-        this.moveEnemies()
+        if(this.canReallyAnimate())
+            this.moveEnemies()
+
+        
+        console.log('bb')
 
         // Draw enemies and detect their collisions with player
         for(let enemy of this.enemies){
@@ -275,6 +280,7 @@ export default class Game{
                         enemyImg.src = './assets/enemies/droid/' + enemy.color + '/' + enemyPhase + '_' + droidMovementPhase + '.png'
                         break
                     default:
+                        enemyImg.src = './assets/enemies/jumper/' + enemyPhase + '.png'
                         break
                 }
                 this.ctx.drawImage(enemyImg, enemy.collisionRect.x, enemy.collisionRect.y)   
@@ -283,7 +289,8 @@ export default class Game{
 
         // Move and draw bullets
         for(let bullet of this.playerBullets){
-            bullet.move()
+            if(this.canReallyAnimate())
+                bullet.move()
             let bulletImg = document.createElement('img')
             bulletImg.src = './assets/bullets/' + bullet.type + '.png'
             if(bullet.type == "diagonal" || bullet.type == "diagonalInverted"){
@@ -331,7 +338,7 @@ export default class Game{
             }
         }
 
-        // Draw bullets animations
+        // Draw bullets explosion animations
         let newBulletsAnimations : any[] = []
         for(let bulletAnimation of this.bulletsAnimations){
             if(this.frame - bulletAnimation.startFrame < 4){
@@ -360,7 +367,7 @@ export default class Game{
                             enemiesToDelete.push(neighbourEnemy)
                         }
                     }
-                    this.shadowFreezeTime = Date.now()
+                    this.shadowFreezeTime = Math.floor(Date.now()/2)*2
                     bulletsToDelete.push(bullet)
                     this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
                 }
@@ -418,8 +425,12 @@ export default class Game{
         }
         this.playerBullets = newBullets
 
-        this.frame += 1
-
+        
+        if(this.canReallyAnimate())
+            this.frame += 1
+        this.animationFrame += 1
+        console.log('aa')
+        window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
     setNewRoom(roomId: number){
@@ -456,6 +467,7 @@ export default class Game{
             this.timeOfEnteringRoom = Date.now()
             this.roomsTraveledSinceInjured = 1
         }
+        window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
     die(){
@@ -814,28 +826,28 @@ export default class Game{
                 if(this.playerCollisionRect.y <= 1080 - this.playerCollisionRect.height - this.playerSpeed){
                     this.playerCollisionRect.y += this.playerSpeed
                 }
-            }, this.frameLength)
+            }, Math.floor(1000/60))
         }
         else if(key == "ArrowUp" && !this.playerMovementsObject.goUp){
             this.playerMovementsObject.goUp = setInterval(()=>{
                 if(this.playerCollisionRect.y > 0){
                     this.playerCollisionRect.y -= this.playerSpeed
                 }
-            }, this.frameLength)
+            }, Math.floor(1000/60))
         }
         else if(key == "ArrowRight" && !this.playerMovementsObject.goRight){
             this.playerMovementsObject.goRight = setInterval(()=>{
                 if(this.playerCollisionRect.x <= 1920 - this.playerCollisionRect.width - this.playerSpeed){
                     this.playerCollisionRect.x += this.playerSpeed
                 }
-            }, this.frameLength)
+            }, Math.floor(1000/60))
         }
         else if(key == "ArrowLeft" && !this.playerMovementsObject.goLeft){
             this.playerMovementsObject.goLeft = setInterval(()=>{
                 if(this.playerCollisionRect.x > 0){
                     this.playerCollisionRect.x -= this.playerSpeed
                 }
-            }, this.frameLength)
+            }, Math.floor(1000/60))
         }
     }
 
@@ -880,7 +892,31 @@ export default class Game{
 
     moveEnemies(){
         for(let enemy of this.enemies){
-            if(enemy.type == 1){
+            if(enemy.type == 2){
+                if(this.frame%2 == 0){
+                    let distanceX : number = (this.playerCollisionRect.x + this.playerCollisionRect.width/2) - (enemy.collisionRect.x + enemy.collisionRect.width/2)
+                    let distanceY : number = (this.playerCollisionRect.y + this.playerCollisionRect.height/2) - (enemy.collisionRect.y + enemy.collisionRect.height/2)
+                    if(Math.abs(distanceX) > enemy.speed){
+                        distanceX = distanceX/Math.abs(distanceX)*enemy.speed
+                    }
+                    if(Math.abs(distanceY) > enemy.speed){
+                        distanceY = distanceY/Math.abs(distanceY)*enemy.speed
+                    }
+                    let newCollisionRect : ICollisionRect = {x: enemy.collisionRect.x + distanceX, y: enemy.collisionRect.y + distanceY, width: enemy.collisionRect.width, height: enemy.collisionRect.height}
+                    while(!this.canEnemyMove(enemy, newCollisionRect)){
+                        if(Math.abs(distanceX) >= Math.abs(distanceY)){
+                            distanceY = 0
+                        }
+                        else{
+                            distanceX = 0
+                        }
+                        newCollisionRect= {x: enemy.collisionRect.x + distanceX, y: enemy.collisionRect.y + distanceY, width: enemy.collisionRect.width, height: enemy.collisionRect.height}
+                    }
+
+                    enemy.collisionRect = newCollisionRect
+                }
+            }
+            else if(enemy.type == 1){
                 if(this.frame - enemy.movementObject.endFrame >= 8){
                     // Start new movement
                     if(this.canEnemySeePlayer(enemy.collisionRect)){
@@ -915,28 +951,9 @@ export default class Game{
                 }
                 else if(this.frame < enemy.movementObject.endFrame){
                     // Move if possible
-                    let ableToMove : boolean = true
                     let newCollisionRect : ICollisionRect = {x: enemy.collisionRect.x + enemy.movementObject.forceX*enemy.speed, y: enemy.collisionRect.y + enemy.movementObject.forceY*enemy.speed, width: enemy.collisionRect.width, height: enemy.collisionRect.height}
-                    if(newCollisionRect.x < 0 || newCollisionRect.y < 0 || newCollisionRect.x + newCollisionRect.width > 320 || newCollisionRect.y + newCollisionRect.height > 176){
-                        ableToMove = false
-                    }
-                    if(ableToMove){
-                        for(let otherEnemy of this.enemies){
-                            if(!otherEnemy.equals(enemy) && this.isCollisionDetected(otherEnemy.collisionRect, newCollisionRect)){
-                                ableToMove = false
-                                break
-                            }
-                        }
-                    }
-                    if(ableToMove){
-                        for(let wall of this.currentRoom.wallCollisionRects){
-                            if(this.isCollisionDetected(newCollisionRect, wall)){
-                                ableToMove = false
-                                break
-                            }
-                        }
-                    }
-                    if(ableToMove){
+                    
+                    if(this.canEnemyMove(enemy, newCollisionRect)){
                         enemy.collisionRect = newCollisionRect
                     }
                     else{
@@ -1030,6 +1047,24 @@ export default class Game{
         }
     }
 
+    canEnemyMove(enemy : Enemy, newCollisionRect : ICollisionRect) : boolean{
+        if(newCollisionRect.x < 0 || newCollisionRect.y < 0 || newCollisionRect.x + newCollisionRect.width > 320 || newCollisionRect.y + newCollisionRect.height > 176){
+            return false
+        }
+        for(let otherEnemy of this.enemies){
+            if(!otherEnemy.equals(enemy) && this.isCollisionDetected(otherEnemy.collisionRect, newCollisionRect)){
+                return false
+            }
+        }
+        for(let wall of this.currentRoom.wallCollisionRects){
+            if(this.isCollisionDetected(newCollisionRect, wall)){
+                return false
+            }
+        }
+
+        return true
+    }
+
     canEnemySeePlayer(enemyCollisionRect : ICollisionRect) : boolean{
         let enemyPoint : number[] = [enemyCollisionRect.x + enemyCollisionRect.width/2, enemyCollisionRect.y + enemyCollisionRect.height/2]
         let playerPoint : number[] = [this.playerCollisionRect.x + this.playerCollisionRect.width/2, this.playerCollisionRect.y + this.playerCollisionRect.height/2]
@@ -1079,5 +1114,9 @@ export default class Game{
                 return true
         }
         return false
+    }
+
+    canReallyAnimate(){
+        return this.animationFrame%6 == 0
     }
 }

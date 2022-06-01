@@ -16,7 +16,7 @@
   \*********************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\nvar Room = /** @class */ (function () {\r\n    function Room(id, levelColor, bgColor, wallCollisionRects, neighbourRoomsIds, keyColor, keyHoleColor) {\r\n        this.id = id;\r\n        this.levelColor = levelColor;\r\n        this.bgColor = bgColor;\r\n        this.wallCollisionRects = wallCollisionRects;\r\n        this.neighbourRoomsIds = neighbourRoomsIds;\r\n        this.keyColor = keyColor;\r\n        this.keyHoleColor = keyHoleColor;\r\n    }\r\n    return Room;\r\n}());\r\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Room);\r\n\n\n//# sourceURL=webpack://shamus/./src/Room.ts?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   \"default\": () => (__WEBPACK_DEFAULT_EXPORT__)\n/* harmony export */ });\nvar Room = /** @class */ (function () {\n    function Room(id, levelColor, bgColor, wallCollisionRects, neighbourRoomsIds, keyColor, keyHoleColor) {\n        this.id = id;\n        this.levelColor = levelColor;\n        this.bgColor = bgColor;\n        this.wallCollisionRects = wallCollisionRects;\n        this.neighbourRoomsIds = neighbourRoomsIds;\n        this.keyColor = keyColor;\n        this.keyHoleColor = keyHoleColor;\n    }\n    return Room;\n}());\n/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Room);\n\n\n//# sourceURL=webpack://shamus/./src/Room.ts?");
 
 /***/ })
 

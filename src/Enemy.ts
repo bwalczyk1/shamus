@@ -22,6 +22,9 @@ export default class Enemy{
                 this.speed = 2
                 break
             default:
+                availableColors =["green"]
+                this.collisionRect = {x: 0, y: 0, width: 12, height: 8}
+                this.speed = 16
                 break
         }
         this.color = availableColors[Math.floor(Math.random()*availableColors.length)]
