@@ -1,5 +1,6 @@
 import Bullet from "./Bullet"
 import Enemy from "./Enemy"
+import EnemyBullet from "./EnemyBullet"
 import ICollisionRect from "./ICollisionRect"
 import Room from "./Room"
 
@@ -25,6 +26,7 @@ export default class Game{
     isFireModeOn : boolean = false
     isGunLoaded : boolean = true
     playerBullets : Bullet[] = []
+    enemyBullets : EnemyBullet[] = []
     playerLives : number = 4
     score : number = 0
     highScore : number = 0
@@ -79,8 +81,8 @@ export default class Game{
         window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
-    async refreshScreen(){
-        console.log(this.playerCollisionRect.x)
+    refreshScreen(){
+        // console.log(this.playerCollisionRect.x)
         this.ctx = this.gameScreen.getContext('2d')
         this.ctx.clearRect(0, 0, 320, 208)
         // this.ctx.fillStyle = "black"
@@ -248,11 +250,13 @@ export default class Game{
         this.ctx.drawImage(playerImg, this.playerCollisionRect.x, this.playerCollisionRect.y)
         
         // Move enemies
-        if(this.canReallyAnimate())
+        if(this.canReallyAnimate()){
             this.moveEnemies()
+            this.fireEnemyBullets()
+        }
 
         
-        console.log('bb')
+        // console.log('bb')
 
         // Draw enemies and detect their collisions with player
         for(let enemy of this.enemies){
@@ -288,6 +292,12 @@ export default class Game{
         }
 
         // Move and draw bullets
+        this.ctx.fillStyle = "medium turquoise"
+        for(let enemyBullet of this.enemyBullets){
+            if(this.canReallyAnimate())
+                enemyBullet.move()
+            this.ctx.fillRect(enemyBullet.x, enemyBullet.y, 2, 2)
+        }
         for(let bullet of this.playerBullets){
             if(this.canReallyAnimate())
                 bullet.move()
@@ -352,6 +362,7 @@ export default class Game{
 
         // Detect bullets' collisions with shadow, walls and enemies
         let bulletsToDelete : Bullet[] = []
+        let enemyBulletsToDelete : EnemyBullet[] = []
         let enemiesToDelete : Enemy[] = []
         for(let bullet of this.playerBullets){
             if(bullet.collisionRect.x + bullet.collisionRect.width < 0 || bullet.collisionRect.x > 320 || bullet.collisionRect.y + bullet.collisionRect.height < 0 || bullet.collisionRect.y > 176){
@@ -382,20 +393,49 @@ export default class Game{
                             break
                         }
                     }
-                    for(let enemy of this.enemies){
-                        if(this.isCollisionDetected(bullet.collisionRect, enemy.collisionRect)){
-                            let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
-                            let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
-                            let bulletBlast : ICollisionRect = {x: bulletBlastX, y: bulletBlastY, width: 24, height: 24}
-                            for(let neighbourEnemy of this.enemies){
-                                if(this.isCollisionDetected(bulletBlast, neighbourEnemy.collisionRect) && !this.enemyArrayIncludes(enemiesToDelete, neighbourEnemy)){
-                                    enemiesToDelete.push(neighbourEnemy)
+                    if(!this.bulletArrayIncludes(bulletsToDelete, bullet)){
+                        for(let enemy of this.enemies){
+                            if(this.isCollisionDetected(bullet.collisionRect, enemy.collisionRect)){
+                                let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
+                                let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
+                                let bulletBlast : ICollisionRect = {x: bulletBlastX, y: bulletBlastY, width: 24, height: 24}
+                                for(let neighbourEnemy of this.enemies){
+                                    if(this.isCollisionDetected(bulletBlast, neighbourEnemy.collisionRect) && !this.enemyArrayIncludes(enemiesToDelete, neighbourEnemy)){
+                                        enemiesToDelete.push(neighbourEnemy)
+                                    }
                                 }
-                            }
-                            if(!this.bulletArrayIncludes(bulletsToDelete, bullet)){
                                 bulletsToDelete.push(bullet)
                                 this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
+                                break
                             }
+                        }
+                    }
+                }
+            }
+        }
+        for(let enemyBullet of this.enemyBullets){
+            if(enemyBullet.x + 2 < 0 || enemyBullet.x > 320 || enemyBullet.y + 2 < 0 || enemyBullet.y > 176){
+                enemyBulletsToDelete.push(enemyBullet)
+            }
+            else{
+                let EBCollisionRect : ICollisionRect = {x: enemyBullet.x, y: enemyBullet.y, width: 2, height: 2}
+                if(this.isCollisionDetected(EBCollisionRect, this.playerCollisionRect)){
+                    this.takeDamage()
+                    return
+                }
+                for(let wall of this.currentRoom.wallCollisionRects){
+                    if(this.isCollisionDetected(EBCollisionRect, wall)){
+                        enemyBulletsToDelete.push(enemyBullet)
+                        break
+                    }
+                }
+                if(!this.bulletArrayIncludes(enemyBulletsToDelete, enemyBullet)){
+                    for(let enemy of this.enemies){
+                        if(this.isCollisionDetected(EBCollisionRect, enemy.collisionRect)){
+                            if(!this.enemyArrayIncludes(enemiesToDelete, enemy)){
+                                enemiesToDelete.push(enemy)
+                            }
+                            enemyBulletsToDelete.push(enemyBullet)
                             break
                         }
                     }
@@ -424,12 +464,18 @@ export default class Game{
             }
         }
         this.playerBullets = newBullets
-
+        let newEnemyBullets : EnemyBullet[] = []
+        for(let enemyBullet of this.enemyBullets){
+            if(!this.bulletArrayIncludes(enemyBulletsToDelete, enemyBullet)){
+                newEnemyBullets.push(enemyBullet)
+            }
+        }
+        this.enemyBullets = newEnemyBullets
         
         if(this.canReallyAnimate())
             this.frame += 1
         this.animationFrame += 1
-        console.log('aa')
+        // console.log('aa')
         window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
@@ -442,11 +488,13 @@ export default class Game{
         this.createRoomBackground()
         this.enemies = []
         this.playerBullets = []
-        this.createEnemies(3)
+        this.enemyBullets = []
+        this.createEnemies(1)
         this.placeKey()
         this.placeKeyHole()
         this.timeOfEnteringRoom = Date.now()
         this.roomsTraveledSinceInjured += 1
+        console.log(this.roomsTraveledSinceInjured)
     }
 
     takeDamage(){
@@ -461,12 +509,13 @@ export default class Game{
             this.playerCollisionRect.y = this.lastStartPosition[1]
             this.enemies = []
             this.playerBullets = []
-            this.createEnemies(3)
+            this.enemyBullets = []
+            this.createEnemies(1)
             this.placeKey()
             this.placeKeyHole()
             this.timeOfEnteringRoom = Date.now()
-            this.roomsTraveledSinceInjured = 1
         }
+        this.roomsTraveledSinceInjured = 1
         window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
@@ -830,7 +879,7 @@ export default class Game{
         }
         else if(key == "ArrowUp" && !this.playerMovementsObject.goUp){
             this.playerMovementsObject.goUp = setInterval(()=>{
-                if(this.playerCollisionRect.y > 0){
+                if(this.playerCollisionRect.y >= 0){
                     this.playerCollisionRect.y -= this.playerSpeed
                 }
             }, Math.floor(1000/60))
@@ -844,7 +893,7 @@ export default class Game{
         }
         else if(key == "ArrowLeft" && !this.playerMovementsObject.goLeft){
             this.playerMovementsObject.goLeft = setInterval(()=>{
-                if(this.playerCollisionRect.x > 0){
+                if(this.playerCollisionRect.x >= 0){
                     this.playerCollisionRect.x -= this.playerSpeed
                 }
             }, Math.floor(1000/60))
@@ -921,7 +970,7 @@ export default class Game{
                     // Start new movement
                     if(this.canEnemySeePlayer(enemy)){
                         // Choose direction
-                        console.log('real move')
+                        // console.log('real move')
                         let distanceX : number = (this.playerCollisionRect.x + this.playerCollisionRect.width/2) - (enemy.collisionRect.x + enemy.collisionRect.width/2)
                         let distanceY : number = (this.playerCollisionRect.y + this.playerCollisionRect.height/2) - (enemy.collisionRect.y + enemy.collisionRect.height/2)
                         if(Math.abs(distanceX) > Math.abs(distanceY)){
@@ -933,7 +982,7 @@ export default class Game{
                     }
                     else{
                         // Random direction
-                        console.log('random move')
+                        // console.log('random move')
                         let randOfFour : number = Math.floor(Math.random() * 4)
                         if(randOfFour%2 == 0){
                             enemy.movementObject.forceX = randOfFour-1
@@ -1015,18 +1064,32 @@ export default class Game{
                     }
                 }
                 
-                if(Math.abs(horizontalDistance) > Math.abs(verticalDistance) && Math.abs(horizontalDistance) >= this.playerSpeed){
+                if(Math.abs(horizontalDistance) > Math.abs(verticalDistance) && Math.abs(horizontalDistance) >= enemy.speed){
                     // if(Math.abs(horizontalDistance) >= enemy.speed)
                         enemy.collisionRect.x += (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x) * enemy.speed
                     // else
                     //     enemy.collisionRect.x += Math.floor(horizontalDistance)
                 }
-                else if(Math.abs(verticalDistance) >= this.playerSpeed){
+                else if(Math.abs(verticalDistance) >= enemy.speed){
                     // if(Math.abs(verticalDistance) >= enemy.speed)
                         enemy.collisionRect.y += (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y) * enemy.speed
                     // else
                     //     enemy.collisionRect.y += Math.floor(verticalDistance)
                 }    
+            }
+        }
+    }
+
+    fireEnemyBullets(){
+        for(let enemy of this.enemies){
+            if(enemy.type != 2 && this.roomsTraveledSinceInjured >= 3){
+                let bulletDirections : any = this.canEnemyShootPlayer(enemy)
+                if(bulletDirections){
+                    let newEnemyBullet = new EnemyBullet(this.bulletsFired, bulletDirections.x, bulletDirections.y, bulletDirections.movementForceX, bulletDirections.movementForceY)
+                    this.enemyBullets.push(newEnemyBullet)
+                    // console.log(newEnemyBullet)
+                    this.bulletsFired += 1
+                }
             }
         }
     }
@@ -1080,15 +1143,10 @@ export default class Game{
     }
 
     canEnemyShootPlayer(enemy : Enemy){
-        // [Finish]
         let forceX : number = 0
         let forceY : number = 0
-        let enemyCenterX : number = enemy.collisionRect.x + enemy.collisionRect.width/2
-        let enemyCenterY : number = enemy.collisionRect.y + enemy.collisionRect.height/2
-        
-        if((enemyCenterX < this.playerCollisionRect.x || enemyCenterX > this.playerCollisionRect.x + enemy.collisionRect.width)
-            && (enemyCenterY < this.playerCollisionRect.y || enemyCenterY > this.playerCollisionRect.y + enemy.collisionRect.height))
-            return false
+        let enemyCenterX : number = Math.round(enemy.collisionRect.x + enemy.collisionRect.width/2)
+        let enemyCenterY : number = Math.round(enemy.collisionRect.y + enemy.collisionRect.height/2)
 
         if(!this.canEnemySeePlayer(enemy))
             return false
@@ -1096,42 +1154,89 @@ export default class Game{
         let playerPointX : number
         let playerPointY : number
 
-        if(enemyCenterX >= this.playerCollisionRect.x && enemyCenterX <= this.playerCollisionRect.x + this.playerCollisionRect.width){
+        if(this.frame%4 == 0 && enemyCenterX >= this.playerCollisionRect.x && enemyCenterX <= this.playerCollisionRect.x + this.playerCollisionRect.width){
             playerPointX = enemyCenterX
-            playerPointY = this.playerCollisionRect.y + this.playerCollisionRect.height/2
+            playerPointY = Math.round(this.playerCollisionRect.y + this.playerCollisionRect.height/2)
         }
-        else if(enemyCenterY >= this.playerCollisionRect.y && enemyCenterY <= this.playerCollisionRect.y + this.playerCollisionRect.height/2){
+        else if(this.frame%4 == 0 && enemyCenterY >= this.playerCollisionRect.y && enemyCenterY <= this.playerCollisionRect.y + this.playerCollisionRect.height/2){
             playerPointY = enemyCenterY
-            playerPointX = this.playerCollisionRect.x + this.playerCollisionRect.width/2
+            playerPointX = Math.round(this.playerCollisionRect.x + this.playerCollisionRect.width/2)
         }
-        // ALL WRONG
-        // Use difference instead of quotient
-        // else if(enemyCenterX/enemyCenterY >= this.playerCollisionRect.x/(this.playerCollisionRect.y + this.playerCollisionRect.height/2) 
-        //     && enemyCenterX/enemyCenterY <= (this.playerCollisionRect.x + this.playerCollisionRect.width/2)/this.playerCollisionRect.y){
-        //         let xCandidate : number = this.playerCollisionRect.x
-        //         let yCandidate : number = this.playerCollisionRect.y + this.playerCollisionRect.height
-        //         while(xCandidate/yCandidate != enemyCenterX/enemyCenterY){
-        //             xCandidate += 1
-        //             yCandidate += this.playerCollisionRect.height/this.playerCollisionRect.width
-        //         }
-        //         playerPointX = xCandidate
-        //         playerPointY = yCandidate
-        // }
-        // else if()
+        else if(this.frame%2 == 0 && enemyCenterX - enemyCenterY >= this.playerCollisionRect.x - (this.playerCollisionRect.y + this.playerCollisionRect.height) 
+            && enemyCenterX - enemyCenterY <= (this.playerCollisionRect.x + this.playerCollisionRect.width) - this.playerCollisionRect.y){
+            let xCandidate : number = this.playerCollisionRect.x
+            let yCandidate : number = this.playerCollisionRect.y + this.playerCollisionRect.height
+            while(xCandidate - yCandidate != enemyCenterX - enemyCenterY){
+                if(xCandidate > this.playerCollisionRect.x + this.playerCollisionRect.width){
+                    xCandidate = this.playerCollisionRect.x + this.playerCollisionRect.width
+                    yCandidate = this.playerCollisionRect.y
+                    while(xCandidate - yCandidate != enemyCenterX - enemyCenterY){
+                        if(xCandidate < this.playerCollisionRect.x)
+                            return false
+                        xCandidate -= 1
+                        yCandidate += 1
+                    }
+                    break
+                }
+                xCandidate += 1
+                yCandidate -= 1
+            }
+            playerPointX = xCandidate
+            playerPointY = yCandidate
+        }
+        else if(this.frame%2 == 0 && (320 - enemyCenterX) - enemyCenterY <= (320 - this.playerCollisionRect.x) - this.playerCollisionRect.y
+            && (320 - enemyCenterX) - enemyCenterY >= (320 - (this.playerCollisionRect.x + this.playerCollisionRect.width)) - (this.playerCollisionRect.y + this.playerCollisionRect.height)){
+            let xCandidate : number = this.playerCollisionRect.x
+            let yCandidate : number = this.playerCollisionRect.y
+            while((320 - xCandidate) - yCandidate != (320 - enemyCenterX) - enemyCenterY){
+                if(xCandidate > this.playerCollisionRect.x + this.playerCollisionRect.width){
+                    xCandidate = this.playerCollisionRect.x + this.playerCollisionRect.width
+                    yCandidate = this.playerCollisionRect.y + this.playerCollisionRect.height
+                    while((320 - xCandidate) - yCandidate != (320 - enemyCenterX) - enemyCenterY){
+                        if(xCandidate < this.playerCollisionRect.x)
+                            return false
+                        xCandidate -= 1
+                        yCandidate -= 1
+                    }
+                    break
+                }
+                xCandidate += 1
+                yCandidate += 1
+            }
+            playerPointX = xCandidate
+            playerPointY = yCandidate
+        }
         else{
             return false
         }
-        forceX = (playerPointX - enemyCenterX)/Math.abs(playerPointX - enemyCenterX)
-        forceY = (playerPointY - enemyCenterY)/Math.abs(playerPointY - enemyCenterY)
-
-
+        if(playerPointX - enemyCenterX == 0)
+            forceX = 0
+        else
+            forceX = (playerPointX - enemyCenterX)/Math.abs(playerPointX - enemyCenterX)
+        if(playerPointY - enemyCenterY == 0)
+            forceY = 0
+        else
+            forceY = (playerPointY - enemyCenterY)/Math.abs(playerPointY - enemyCenterY)
 
         for(let otherEnemy of this.enemies){
             if(!otherEnemy.equals(enemy)){
-
+                let otherEnemyPoint1 : number[] = [otherEnemy.collisionRect.x, otherEnemy.collisionRect.y]
+                let otherEnemyPoint2 : number[] = [otherEnemy.collisionRect.x + otherEnemy.collisionRect.width, otherEnemy.collisionRect.y + otherEnemy.collisionRect.height]
+                if(this.isIntersectionDetected([enemyCenterX, enemyCenterY], [playerPointX, playerPointY], otherEnemyPoint1, otherEnemyPoint2))
+                    return false
+                otherEnemyPoint1 = [otherEnemy.collisionRect.x, otherEnemy.collisionRect.y + otherEnemy.collisionRect.height]
+                otherEnemyPoint2 = [otherEnemy.collisionRect.x + otherEnemy.collisionRect.width, otherEnemy.collisionRect.y]
+                if(this.isIntersectionDetected([enemyCenterX, enemyCenterY], [playerPointX, playerPointY], otherEnemyPoint1, otherEnemyPoint2))
+                    return false
             }
-            
         }
+
+        let horizontalCenterDistance : number = (enemy.collisionRect.width/2 + 2/2)
+        let verticalCenterDistance : number = (enemy.collisionRect.height/2 + 2/2)
+        let newBulletX = Math.floor(enemy.collisionRect.x + enemy.collisionRect.width/2 + horizontalCenterDistance*forceX - 2/2)
+        let newBulletY = Math.floor(enemy.collisionRect.y + enemy.collisionRect.height/2 + verticalCenterDistance*forceY - 2/2)
+
+        return {x: newBulletX, y: newBulletY, movementForceX: forceX, movementForceY: forceY}
     }
 
     isIntersectionDetected(A : number[], B : number[], C : number[], D : number[]) : boolean{
@@ -1163,13 +1268,15 @@ export default class Game{
         return false
     }
 
-    bulletArrayIncludes(bulletArray : Bullet[], bulletToCheck : Bullet) : boolean{
+    bulletArrayIncludes(bulletArray : any[], bulletToCheck : any) : boolean{
         for(let bullet of bulletArray){
             if(bulletToCheck.id == bullet.id)
                 return true
         }
         return false
     }
+
+
 
     canReallyAnimate(){
         return this.animationFrame%6 == 0

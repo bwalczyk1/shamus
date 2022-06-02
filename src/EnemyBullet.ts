@@ -1,11 +1,13 @@
 export default class EnemyBullet{
+    id : number
     x : number
     y : number
-    speed : number = 9
+    speed : number = 7
     speedX : number
     speedY : number
 
-    constructor(x : number, y : number, movementForceX : number, movementForceY : number){
+    constructor(id: number, x : number, y : number, movementForceX : number, movementForceY : number){
+        this.id = id
         this.x = x
         this.y = y
         this.speedX = movementForceX * this.speed
