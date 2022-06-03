@@ -43,6 +43,8 @@ export default class Game{
     bulletsAnimations : any[] = []
     isPlayerTakingDamage : boolean = false
     playerDamageFrame : number
+    gameFinished : boolean = false
+    numberOfCreatedEnemies : number = 3
 
     constructor(){
         this.startTime = Date.now()
@@ -446,6 +448,10 @@ export default class Game{
     }
 
     refreshScreen(){
+        if(this.gameFinished){
+            alert("Gratulacje!!! Wygrałeś")
+            return
+        }
         this.ctx = this.gameScreen.getContext('2d')
         this.ctx.clearRect(0, 0, 320, 208)
 
@@ -476,7 +482,18 @@ export default class Game{
         }
 
         // Draw shadow and detect collision with player
-        if(Date.now() - this.timeOfEnteringRoom >= 15000){
+        if(this.currentRoom.id == this.rooms.length - 1){
+            let shadowImg = document.createElement('img')
+            shadowImg.src = './assets/enemies/shadow/0.png'
+            let shadowX : number = Math.round(320/2 - 18/2)
+            let shadowY : number = Math.round(176/2 - 15/2)
+            this.ctx.drawImage(shadowImg, shadowX, shadowY)
+            if(!this.isPlayerTakingDamage && this.isCollisionDetected({x: shadowX, y: shadowY, width: 18, height: 15}, this.playerCollisionRect)){
+                this.takeDamage()
+                return
+            }
+        }
+        else if(Date.now() - this.timeOfEnteringRoom >= 15000){
             let isShadowFrozen : boolean = (Date.now() - this.shadowFreezeTime <= 2500)
             let isShadowInMmove = Date.now() - this.timeOfEnteringRoom >= 17500
             if(!this.isPlayerTakingDamage && isShadowInMmove && !isShadowFrozen && this.canReallyAnimate()){
@@ -795,7 +812,12 @@ export default class Game{
                     bulletsToDelete.push(bullet)
                 }
                 else{
-                    if(this.isCollisionDetected(bullet.collisionRect, this.shadowCollisionRect)){
+                    if(this.currentRoom.id == this.rooms.length - 1 && this.isCollisionDetected(bullet.collisionRect, {x: Math.round(320/2 - 18/2), y: Math.round(176/2 - 15/2), width: 18, height: 15})){
+                        this.gameFinished = true
+                        window.requestAnimationFrame(()=>this.refreshScreen())
+                        return
+                    }
+                    else if(this.currentRoom.id != this.rooms.length - 1 && this.isCollisionDetected(bullet.collisionRect, this.shadowCollisionRect)){
                         let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
                         let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
                         let bulletBlast : ICollisionRect = {x: bulletBlastX, y: bulletBlastY, width: 24, height: 24}
@@ -917,7 +939,7 @@ export default class Game{
         this.enemies = []
         this.playerBullets = []
         this.enemyBullets = []
-        this.createEnemies(0)
+        this.createEnemies(this.numberOfCreatedEnemies)
         this.placeKey()
         this.placeKeyHole()
         this.placeItem()
@@ -949,16 +971,18 @@ export default class Game{
             this.playerSpeed = this.basicSpeed
             this.placeShadow()
             if(this.playerLives ==  0){
+                this.numberOfCreatedEnemies = 3
                 this.die()
             }
             else{
+                this.numberOfCreatedEnemies += 1
                 this.playerLives--
                 this.playerCollisionRect.x = this.lastStartPosition[0]
                 this.playerCollisionRect.y = this.lastStartPosition[1]
                 this.enemies = []
                 this.playerBullets = []
                 this.enemyBullets = []
-                this.createEnemies(0)
+                this.createEnemies(this.numberOfCreatedEnemies)
                 this.placeKey()
                 this.placeKeyHole()
                 this.placeItem()
