@@ -17,7 +17,7 @@ export default class Enemy{
                 this.speed = 3
                 break
             case 1:
-                availableColors = ["yellow"]
+                availableColors = ["yellow", "cyan", "white"]
                 //availableColors = ["yellow", "cyan", 'white']
                 this.speed = 2
                 break

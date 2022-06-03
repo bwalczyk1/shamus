@@ -8,8 +8,9 @@ export default class Room{
     neighbourRoomsIds : number[]
     keyColor : string
     keyHoleColor : string
+    collectableItem : string
 
-    constructor(id: number,levelColor : string, bgColor : string, wallCollisionRects : ICollisionRect[], neighbourRoomsIds : number[], keyColor : string, keyHoleColor : string){
+    constructor(id: number,levelColor : string, bgColor : string, wallCollisionRects : ICollisionRect[], neighbourRoomsIds : number[], keyColor : string, keyHoleColor : string, collectableItem : string){
         this.id = id
         this.levelColor = levelColor
         this.bgColor = bgColor
@@ -17,5 +18,6 @@ export default class Room{
         this.neighbourRoomsIds = neighbourRoomsIds
         this.keyColor = keyColor
         this.keyHoleColor = keyHoleColor
+        this.collectableItem = collectableItem
     }
 }

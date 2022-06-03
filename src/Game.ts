@@ -36,9 +36,13 @@ export default class Game{
     keys : string[] = []
     keyCollisionRect : ICollisionRect
     keyHoleCollisionRect : ICollisionRect
+    collectableItemCollisionRect : ICollisionRect
     openingWallInterval : any
     roomsOfFoundKeys : number[] = []
+    roomsOfFoundItems : number[] = []
     bulletsAnimations : any[] = []
+    isPlayerTakingDamage : boolean = false
+    playerDamageFrame : number
 
     constructor(){
         this.startTime = Date.now()
@@ -48,7 +52,7 @@ export default class Game{
         this.ctx = this.gameScreen.getContext('2d')
         this.ctx.imageSmoothingEnabled = false
 
-        this.rooms.push(new Room(10, "black", "yellow", [
+        this.rooms.push(new Room(0, "black", "yellow", [
                 {x: 0, y: 64, width: 8, height: 48},
                 {x: 0, y: 56, width: 56, height: 8}, 
                 {x: 48, y: 8, width: 8, height: 48},
@@ -63,12 +67,373 @@ export default class Game{
                 {x: 120, y: 56, width: 8, height: 56},
                 {x: 128, y: 56, width: 64, height: 8},
                 {x: 192, y: 56, width: 8, height: 56}
-            ],[null, 1, null, null], "blue", ""))
-        this.rooms.push(new Room(21, "black", "yellow", [
-                {x: 320 - 8, y: 56 + 8, width: 8, height: 112 - 56 - 8},
-                {x: 0, y: 112, width: 320, height: 8},
-                {x: 0, y: 56, width: 320, height: 8}
-            ], [null, null, null, 0], "", "blue"))
+            ],[null, 1, null, null], "", "", "mystery"))
+        this.rooms.push(new Room(1, "black", "yellow", [
+                {x: 0, y: 56, width: 320, height: 8},
+                {x: 0, y: 112, width: 15*8, height: 8},
+                {x: 15*8, y: 112, width: 8, height: 8*8},
+                {x: 24*8, y: 112,  width: 8, height: 8*8},
+                {x: 25*8, y: 112, width: 15*8, height: 8}
+            ], [null, 2, 8, 0], "", "", ""))
+        this.rooms.push(new Room(2, "black", "yellow", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 48, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 18*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 14*8},
+                {x: 25*8, y: 0, width: 9*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 15*8, y: 7*8, width: 8, height: 14*8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8}
+            ], [null, 3, null, 1], "blue", "", ""))
+        this.rooms.push(new Room(3, "black", "yellow", [
+                {x: 0, y: 56, width: 16*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 0, y: 14*8, width: 25*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 14*8}
+            ], [4, null, null, 2], "", "", ""))
+        this.rooms.push(new Room(4, "black", "blue", [
+                {x: 15*8, y: 7*8, width: 8, height: 15*8},
+                {x: 16*8, y: 7*8, width: 24*8, height: 8},
+                {x: 24*8, y: 14*8, width: 8, height: 8*8},
+                {x: 25*8, y: 14*8, width: 15*8, height: 8}
+            ], [null, 5, 3, null], "", "", ""))
+        this.rooms.push(new Room(5, "black", "blue", [
+                {x: 0, y: 56, width: 16*8, height: 8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 28*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 24*8, y: 7*8, width: 16*8, height: 8},
+                {x: 0, y: 112, width: 16*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 24*8, y: 14*8, width: 16*8, height: 8}    
+            ], [null, 6, null, 4], "", "", "potion"))
+        this.rooms.push(new Room(6, "black", "blue", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 28*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8},
+                {x: 15*8, y: 7*8, width: 8, height: 7*8},
+                {x: 16*8, y: 7*8, width: 9*8, height: 8},
+                {x: 15*8, y: 14*8, width: 10*8, height: 8}
+            ], [null, 7, null, 5], "", "", "mystery"))
+        this.rooms.push(new Room(7, "black", "blue", [
+                {x: 0, y: 7*8, width: 24*8, height: 8},
+                {x: 24*8, y: 7*8, width: 8, height: 15*8},
+                {x: 0, y: 14*8, width: 15*8, height: 8},
+                {x: 15*8, y: 14*8, width: 8, height: 10*8}    
+            ], [null, null, 36, 6], "", "", ""))
+        this.rooms.push(new Room(8, "black", "olive", [
+                {x: 15*8, y: 0, width: 8, height: 14*8},
+                {x: 15*8, y: 14*8, width: 25*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 7*8, width: 16*8, height: 8}
+            ], [1, 9, null, null], "",  "", ""))
+        this.rooms.push(new Room(9, "black", "olive", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 28*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 15*8, y: 14*8, width: 8, height: 7*8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 15*8, y: 7*8, width: 9*8, height: 8},
+                {x: 24*8, y: 7*8, width: 8, height: 7*8},
+                {x: 24*8, y: 14*8, width: 16*8, height: 8}
+            ], [null, 10, null, 8], "", "", "mystery"))
+        this.rooms.push(new Room(10, "black", "olive", [
+                {x: 0, y: 56, width: 320, height: 8},
+                {x: 0, y: 112, width: 15*8, height: 8},
+                {x: 15*8, y: 112, width: 8, height: 8*8},
+                {x: 24*8, y: 112,  width: 8, height: 8*8},
+                {x: 25*8, y: 112, width: 15*8, height: 8}
+            ], [null, 11, 16, 9], "", "", ""))
+        this.rooms.push(new Room(11, "black", "olive", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 48, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 9*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 16*8, y: 0, width: 18*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 15*8, y: 14*8, width: 8, height: 7*8},
+                {x: 24*8, y: 7*8, width: 8, height: 14*8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8}
+            ], [null, 12, null, 10], "", "", "mystery"))
+        this.rooms.push(new Room(12, "black", "pink", [
+                {x: 0, y: 7*8, width: 24*8, height: 8},
+                {x: 24*8, y: 7*8, width: 8, height: 15*8},
+                {x: 0, y: 14*8, width: 15*8, height: 8},
+                {x: 15*8, y: 14*8, width: 8, height: 10*8}    
+            ], [null, null, 25, 11], "", "", ""))
+        this.rooms.push(new Room(13, "black", "pink", [
+                {x: 15*8, y: 7*8, width: 8, height: 15*8},
+                {x: 16*8, y: 7*8, width: 24*8, height: 8},
+                {x: 24*8, y: 14*8, width: 8, height: 8*8},
+                {x: 25*8, y: 14*8, width: 15*8, height: 8}
+            ], [null, 14, 19, null], "", "", ""))
+        this.rooms.push(new Room(14, "black", "pink", [
+                {x: 0, y: 56, width: 320, height: 8},
+                {x: 0, y: 112, width: 15*8, height: 8},
+                {x: 15*8, y: 112, width: 8, height: 8*8},
+                {x: 24*8, y: 112,  width: 8, height: 8*8},
+                {x: 25*8, y: 112, width: 15*8, height: 8}
+            ], [null, 15, 21, 13], "", "", ""))
+        this.rooms.push(new Room(15, "black", "pink", [
+                {x: 0, y: 64, width: 8, height: 48}, 
+                {x: 48, y: 8, width: 8, height: 48},
+                {x: 48, y: 0, width: 224, height: 8},
+                {x: 264, y: 8, width: 8, height: 48},
+                {x: 25*8, y: 56, width: 15*8, height: 8},
+                {x: 264, y: 112, width: 56, height: 8},
+                {x: 264, y: 120, width: 8, height: 48},
+                {x: 48, y: 168, width: 224, height: 8},
+                {x: 48, y: 120, width: 8, height: 48},
+                {x: 0, y: 112, width: 128, height: 8},
+                {x: 120, y: 56, width: 8, height: 56},
+                {x: 192, y: 56, width: 8, height: 56},
+                {x: 0, y: 56, width: 56, height: 8}
+            ],[null, 16, null, 14], "", "blue", ""))
+        this.rooms.push(new Room(16, "black", "white", [
+                {x: 0, y: 56, width: 16*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 0, y: 14*8, width: 25*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 14*8}
+            ], [10, null, null, 15], "", "", ""))
+        this.rooms.push(new Room(17, "black", "white", [
+                {x: 15*8, y: 0, width: 8, height: 14*8},
+                {x: 15*8, y: 14*8, width: 25*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 7*8, width: 16*8, height: 8}
+            ], [22, 18, null, null], "",  "", ""))
+        this.rooms.push(new Room(18, "black", "white", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 28*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8}
+            ], [null, 19, null, 17], "orange", "", ""))
+        this.rooms.push(new Room(19, "black", "white", [
+                {x: 0, y: 7*8, width: 16*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 7*8, width: 16*8, height: 8},
+                {x: 0, y: 14*8, width: 320, height: 8}
+            ], [13, 20, null, 18], "", "", ""))
+        this.rooms.push(new Room(20, "black", "lemon", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 28*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8}
+            ], [null, 21, null, 19], "", "", "potion"))
+        this.rooms.push(new Room(21, "black", "lemon", [
+                {x: 0, y: 56, width: 16*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 0, y: 14*8, width: 25*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 14*8}
+            ], [14, null, null, 20], "", "", ""))
+        this.rooms.push(new Room(22, "black", "white", [
+                {x: 15*8, y: 7*8, width: 10*8, height: 8},
+                {x: 15*8, y: 8*8, width: 8, height: 14*8},
+                {x: 24*8, y: 8*8, width: 8, height: 14*8}
+            ], [null, null, 17, null], "", "", ""))
+        this.rooms.push(new Room(23, "black", "lemon", [
+                {x: 15*8, y: 7*8, width: 8, height: 15*8},
+                {x: 16*8, y: 7*8, width: 24*8, height: 8},
+                {x: 24*8, y: 14*8, width: 8, height: 8*8},
+                {x: 25*8, y: 14*8, width: 15*8, height: 8}
+            ], [null, 24, 30, null], "", "", ""))
+        this.rooms.push(new Room(24, "black", "olive", [
+                {x: 0, y: 7*8, width: 25*8, height: 8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 28*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 25*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8}
+            ], [null, 25, null, 23], "", "", "mystery"))
+        this.rooms.push(new Room(25, "black", "olive", [
+                {x: 0, y: 7*8, width: 16*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 7*8, width: 16*8, height: 8},
+                {x: 0, y: 14*8, width: 320, height: 8}
+            ], [12, 26, null, 24], "", "", ""))
+        this.rooms.push(new Room(26, "black", "olive", [
+                {x: 0, y: 7*8, width: 15*8, height: 8},
+                {x: 15*8, y: 7*8, width: 8, height: 7*8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 18*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 14*8},
+                {x: 25*8, y: 0, width: 9*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8} 
+            ], [null, 27, null, 25], "", "", "mystery"))
+        this.rooms.push(new Room(27, "black", "olive", [
+                {x: 0, y: 7*8, width: 16*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 7*8, width: 16*8, height: 8},
+                {x: 0, y: 14*8, width: 320, height: 8}
+            ], [35, 28, null, 26], "", "", ""))
+        this.rooms.push(new Room(28, "black", "green", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 48, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 9*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 14*8},
+                {x: 16*8, y: 0, width: 8*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 25*8, y: 0, width: 9*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 24*8, y: 14*8, width: 8, height: 7*8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8}
+            ], [null, 29, null, 27], "", "", "potion"))
+        this.rooms.push(new Room(29, "black", "green", [
+                {x: 0, y: 7*8, width: 24*8, height: 8},
+                {x: 24*8, y: 7*8, width: 8, height: 15*8},
+                {x: 0, y: 14*8, width: 15*8, height: 8},
+                {x: 15*8, y: 14*8, width: 8, height: 10*8}
+            ], [null, null, 34, 28], "", "", ""))
+        this.rooms.push(new Room(30, "black", "green", [
+                {x: 15*8, y: 0, width: 8, height: 14*8},
+                {x: 15*8, y: 14*8, width: 25*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 7*8, width: 16*8, height: 8}
+            ], [23, 31, null, null], "",  "", ""))
+        this.rooms.push(new Room(31, "black", "green", [
+                {x: 0, y: 7*8, width: 25*8, height: 8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 28*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 15*8, y: 14*8, width: 25*8, height: 8}
+            ], [null, 32, null, 30], "", "", "mystery"))
+        this.rooms.push(new Room(32, "black", "yellow", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 48, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 9*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 14*8},
+                {x: 16*8, y: 0, width: 18*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 24*8, y: 7*8, width: 8, height: 14*8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8}
+            ], [null, 33, null, 31], "red", "", ""))
+        this.rooms.push(new Room(33, "black", "yellow", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 48, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 9*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 14*8},
+                {x: 15*8, y: 14*8, width: 10*8, height: 8},
+                {x: 16*8, y: 0, width: 18*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8}
+            ], [null, 34, null, 32], "", "", "mystery"))
+        this.rooms.push(new Room(34, "black", "yellow", [
+                {x: 0, y: 56, width: 16*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 0, y: 14*8, width: 25*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 14*8}
+            ], [29, null, null, 33], "", "", ""))
+        this.rooms.push(new Room(35, "black", "yellow", [
+                {x: 15*8, y: 7*8, width: 8, height: 15*8},
+                {x: 16*8, y: 7*8, width: 24*8, height: 8},
+                {x: 24*8, y: 14*8, width: 8, height: 8*8},
+                {x: 25*8, y: 14*8, width: 15*8, height: 8}
+            ], [null, 36, 27, null], "", "", ""))
+        this.rooms.push(new Room(36, "black", "blue", [
+                {x: 0, y: 7*8, width: 16*8, height: 8},
+                {x: 15*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 24*8, y: 7*8, width: 16*8, height: 8},
+                {x: 0, y: 14*8, width: 320, height: 8}
+            ], [7, 37, null, 35], "", "", ""))
+        this.rooms.push(new Room(37, "black", "yellow", [
+                {x: 320 - 8, y: 8*8, width: 8, height: 6*8},
+                {x: 0, y: 56, width: 16*8, height: 8},
+                {x: 48, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 18*8, height: 8},
+                {x: 24*8, y: 0, width: 8, height: 7*8},
+                {x: 25*8, y: 0, width: 9*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 15*8, y: 14*8, width: 8, height: 7*8},
+                {x: 16*8, y: 14*8, width: 9*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8}
+            ], [null, 38, null, 36], "", "orange", ""))
+        this.rooms.push(new Room(38, "black", "yellow", [
+                {x: 0, y: 56, width: 7*8, height: 8},
+                {x: 6*8, y: 8, width: 8, height: 6*8},
+                {x: 6*8, y: 0, width: 28*8, height: 8},
+                {x: 33*8, y: 8, width: 8, height: 6*8},
+                {x: 33*8, y: 7*8, width: 7*8, height: 8},
+                {x: 0, y: 14*8, width: 7*8, height: 8},
+                {x: 6*8, y: 15*8, width: 8, height: 6*8},
+                {x: 6*8, y: 21*8, width: 28*8, height: 8},
+                {x: 33*8, y: 15*8, width: 8, height: 6*8},
+                {x: 33*8, y: 14*8, width: 7*8, height: 8},
+                {x: 320 - 8, y: 8*8, width: 8, height: 6*8}
+            ], [null, null, null, 37], "", "", ""))
 
         this.playerCollisionRect.x = this.lastStartPosition[0]
         this.playerCollisionRect.y = this.lastStartPosition[1]
@@ -77,19 +442,24 @@ export default class Game{
         
         document.addEventListener("keydown", (event) => {this.playerDetectAction(event)})
         document.addEventListener("keyup", (event)=> {this.playerStopAction(event)})
-        // setInterval(() => {this.refreshScreen()}, this.frameLength)
         window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
     refreshScreen(){
-        // console.log(this.playerCollisionRect.x)
         this.ctx = this.gameScreen.getContext('2d')
         this.ctx.clearRect(0, 0, 320, 208)
-        // this.ctx.fillStyle = "black"
-        // this.ctx.fillRect(0, 0, 320, 208)
+
+        if(this.isPlayerTakingDamage){
+            this.frame = this.playerDamageFrame
+            if(this.animationFrame % 12 < 6){
+                this.ctx.fillStyle = `rgb(212,67,45)`
+                this.ctx.fillRect(0, 0, 320, 208)
+            }
+        }
 
         //Detect room change
         if(this.playerCollisionRect.y < 0){
+            this.playerCollisionRect.y = 176 - 16 - this.playerCollisionRect.height
             this.setNewRoom(this.currentRoom.neighbourRoomsIds[0])
         }
         else if(this.playerCollisionRect.x + this.playerCollisionRect.width > 320){
@@ -97,6 +467,7 @@ export default class Game{
             this.setNewRoom(this.currentRoom.neighbourRoomsIds[1])
         }
         else if(this.playerCollisionRect.y + this.playerCollisionRect.height > 176){
+            this.playerCollisionRect.y = 16
             this.setNewRoom(this.currentRoom.neighbourRoomsIds[2])
         }
         else if(this.playerCollisionRect.x < 0){
@@ -108,7 +479,7 @@ export default class Game{
         if(Date.now() - this.timeOfEnteringRoom >= 15000){
             let isShadowFrozen : boolean = (Date.now() - this.shadowFreezeTime <= 2500)
             let isShadowInMmove = Date.now() - this.timeOfEnteringRoom >= 17500
-            if(isShadowInMmove && !isShadowFrozen && this.canReallyAnimate()){
+            if(!this.isPlayerTakingDamage && isShadowInMmove && !isShadowFrozen && this.canReallyAnimate()){
                 let newX, newY : number
                 if(this.frame%2 == 1){
                     newX = this.shadowCollisionRect.x - 2
@@ -134,7 +505,7 @@ export default class Game{
                 shadowImg.src = './assets/enemies/shadow/0.png'
             }
             this.ctx.drawImage(shadowImg, this.shadowCollisionRect.x, this.shadowCollisionRect.y)
-            if(this.isCollisionDetected(this.shadowCollisionRect, this.playerCollisionRect)){
+            if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.shadowCollisionRect, this.playerCollisionRect)){
                 this.takeDamage()
                 return
             }
@@ -158,13 +529,13 @@ export default class Game{
             else{
                 this.ctx.fillStyle = this.currentRoom.levelColor
             }
-            if(this.isCollisionDetected(wall, this.playerCollisionRect)){
+            if(!this.isPlayerTakingDamage && this.isCollisionDetected(wall, this.playerCollisionRect)){
                 this.takeDamage()
                 return
             }
             this.ctx.fillRect(wall.x, wall.y, wall.width, wall.height)
             this.ctx.fillStyle = "blue"
-            if(wall == this.currentRoom.wallCollisionRects[0]){
+            if(wall == this.currentRoom.wallCollisionRects[0] && this.currentRoom.keyHoleColor != ""){
                 let realFrame : number = this.frame - (wall.y - (this.currentRoom.wallCollisionRects[this.currentRoom.wallCollisionRects.length - 1].y + this.currentRoom.wallCollisionRects[this.currentRoom.wallCollisionRects.length - 1].height))/2
                 for(let i = 0; i < wall.height; i += 8){
                     this.ctx.fillRect(wall.x, wall.y + i + realFrame%4*2, wall.width, 2)
@@ -185,6 +556,10 @@ export default class Game{
         // Draw interface
         // Highscore
         this.ctx.clearRect(0, 2*8, 6*8, 8)
+        if(this.isPlayerTakingDamage && this.animationFrame % 12 < 6){
+            this.ctx.fillStyle = `rgb(212,67,45)`
+            this.ctx.fillRect(0, 2*8, 6*8, 8)
+        }
         let highScoreString : string = this.highScore.toString()
         for(let i = 0; i < highScoreString.length; i++){
             let digitString : string = highScoreString[i]
@@ -195,6 +570,10 @@ export default class Game{
         }
         // Score
         this.ctx.clearRect(0, 4*8, 6*8, 8)
+        if(this.isPlayerTakingDamage && this.animationFrame % 12 < 6){
+            this.ctx.fillStyle = `rgb(212,67,45)`
+            this.ctx.fillRect(0, 4*8, 6*8, 8)
+        }
         let scoreString : string = this.score.toString()
         for(let i = 0; i < scoreString.length; i++){
             let digitString : string = scoreString[i]
@@ -205,6 +584,10 @@ export default class Game{
         }
         // Lives
         this.ctx.clearRect(320 - 6*8, 8, 6*8, 6*8)
+        if(this.isPlayerTakingDamage && this.animationFrame % 12 < 6){
+            this.ctx.fillStyle = `rgb(212,67,45)`
+            this.ctx.fillRect(320 - 6*8, 8, 6*8, 6*8)
+        }
         let lifeImg = document.createElement('img')
         lifeImg.src = './assets/playerLife.png'
         for(let i = 1; i <= this.playerLives; i++){
@@ -212,11 +595,25 @@ export default class Game{
         }
         // Room info and inventory
         this.ctx.clearRect(0, 208 - 4*8, 320, 4*8)
+        if(this.isPlayerTakingDamage && this.animationFrame % 12 < 6){
+            this.ctx.fillStyle = `rgb(212,67,45)`
+            this.ctx.fillRect(0, 208 - 4*8, 320, 4*8)
+        }
         // - Keys
+        if(this.keys.includes("red")){
+            let redKeyImage : HTMLImageElement = document.createElement('img')
+            redKeyImage.src = './assets/keys/red.png'
+            this.ctx.drawImage(redKeyImage, 6*16 + 1, 176 + 1)
+        }
         if(this.keys.includes("blue")){
             let blueKeyImage : HTMLImageElement = document.createElement('img')
             blueKeyImage.src = './assets/keys/blue.png'
             this.ctx.drawImage(blueKeyImage, 7*16 + 1, 176 + 1)
+        }
+        if(this.keys.includes("orange")){
+            let orangeKeyImage : HTMLImageElement = document.createElement('img')
+            orangeKeyImage.src = './assets/keys/orange.png'
+            this.ctx.drawImage(orangeKeyImage, 8*16 + 1, 176 + 1)
         }
         // - Room info
         let interfaceImage : HTMLImageElement = document.createElement('img')
@@ -250,7 +647,7 @@ export default class Game{
         this.ctx.drawImage(playerImg, this.playerCollisionRect.x, this.playerCollisionRect.y)
         
         // Move enemies
-        if(this.canReallyAnimate()){
+        if(!this.isPlayerTakingDamage && this.canReallyAnimate()){
             this.moveEnemies()
             this.fireEnemyBullets()
         }
@@ -260,7 +657,7 @@ export default class Game{
 
         // Draw enemies and detect their collisions with player
         for(let enemy of this.enemies){
-            if(this.isCollisionDetected(this.playerCollisionRect, enemy.collisionRect)){
+            if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.playerCollisionRect, enemy.collisionRect)){
                 this.takeDamage()
                 return
             }
@@ -294,12 +691,12 @@ export default class Game{
         // Move and draw bullets
         this.ctx.fillStyle = "medium turquoise"
         for(let enemyBullet of this.enemyBullets){
-            if(this.canReallyAnimate())
+            if(!this.isPlayerTakingDamage && this.canReallyAnimate())
                 enemyBullet.move()
             this.ctx.fillRect(enemyBullet.x, enemyBullet.y, 2, 2)
         }
         for(let bullet of this.playerBullets){
-            if(this.canReallyAnimate())
+            if(!this.isPlayerTakingDamage && this.canReallyAnimate())
                 bullet.move()
             let bulletImg = document.createElement('img')
             bulletImg.src = './assets/bullets/' + bullet.type + '.png'
@@ -314,20 +711,19 @@ export default class Game{
         // Draw key and detect its collision with player
         if(this.currentRoom.keyColor != "" && !this.roomsOfFoundKeys.includes(this.currentRoom.id)){
             let keyImage : HTMLImageElement= document.createElement('img')
-            keyImage.src = './assets/keys/' + this.currentRoom.keyColor + '.png'
+            keyImage.src = './assets/keys/' + this.currentRoom.keyColor + 'Big.png'
             this.ctx.drawImage(keyImage, this.keyCollisionRect.x, this.keyCollisionRect.y)
-            if(this.isCollisionDetected(this.playerCollisionRect, this.keyCollisionRect)){
+            if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.playerCollisionRect, this.keyCollisionRect)){
                 this.keys.push(this.currentRoom.keyColor)
                 this.roomsOfFoundKeys.push(this.currentRoom.id)
             }
         }
-
         // Draw keyhole and detect its collision with player
-        if(this.currentRoom.keyHoleColor != "" && this.currentRoom.wallCollisionRects[0].y == this.currentRoom.wallCollisionRects[this.currentRoom.wallCollisionRects.length - 1].y + this.currentRoom.wallCollisionRects[this.currentRoom.wallCollisionRects.length - 1].height){
+        else if(this.currentRoom.keyHoleColor != "" && this.currentRoom.wallCollisionRects[0].y == this.currentRoom.wallCollisionRects[this.currentRoom.wallCollisionRects.length - 1].y + this.currentRoom.wallCollisionRects[this.currentRoom.wallCollisionRects.length - 1].height){
             let keyHoleImg : HTMLImageElement = document.createElement('img')
             keyHoleImg.src = './assets/keyholes/' + this.currentRoom.keyHoleColor + '.png'
             this.ctx.drawImage(keyHoleImg, this.keyHoleCollisionRect.x, this.keyHoleCollisionRect.y)
-            if(this.isCollisionDetected(this.playerCollisionRect, this.keyHoleCollisionRect) && this.keys.includes(this.currentRoom.keyHoleColor)){
+            if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.playerCollisionRect, this.keyHoleCollisionRect) && this.keys.includes(this.currentRoom.keyHoleColor)){
                 let newKeys : string[] = []
                 for(let keyColor of this.keys){
                     if(keyColor != this.currentRoom.keyHoleColor){
@@ -347,6 +743,35 @@ export default class Game{
                 }, this.frameLength/2)
             }
         }
+        // Draw collectable item and detect its collision with player
+        else if(this.currentRoom.collectableItem != "" && !this.roomsOfFoundItems.includes(this.currentRoom.id)){
+            let itemImage : HTMLImageElement= document.createElement('img')
+            itemImage.src = './assets/collectableItems/' + this.currentRoom.collectableItem + "" + this.frame%2 + '.png'
+            this.ctx.drawImage(itemImage, this.collectableItemCollisionRect.x, this.collectableItemCollisionRect.y)
+            if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.playerCollisionRect, this.collectableItemCollisionRect)){
+                let giftOption : number
+                if(this.currentRoom.collectableItem == "potion")
+                    giftOption = 0
+                else
+                    giftOption = Math.floor(Math.random()*3)
+                switch(giftOption){
+                    case 0:
+                        this.playerLives += 1
+                        break
+                    case 1:
+                        this.score += 100
+                        if(this.score > this.highScore)
+                            this.highScore = this.score
+                        break
+                    default:
+                        // Summon shadow
+                        this.timeOfEnteringRoom = Date.now() - 15000
+                        break
+                }
+                this.roomsOfFoundItems.push(this.currentRoom.id)
+            }
+        }
+
 
         // Draw bullets explosion animations
         let newBulletsAnimations : any[] = []
@@ -361,121 +786,124 @@ export default class Game{
         this.bulletsAnimations = newBulletsAnimations
 
         // Detect bullets' collisions with shadow, walls and enemies
-        let bulletsToDelete : Bullet[] = []
-        let enemyBulletsToDelete : EnemyBullet[] = []
-        let enemiesToDelete : Enemy[] = []
-        for(let bullet of this.playerBullets){
-            if(bullet.collisionRect.x + bullet.collisionRect.width < 0 || bullet.collisionRect.x > 320 || bullet.collisionRect.y + bullet.collisionRect.height < 0 || bullet.collisionRect.y > 176){
-                bulletsToDelete.push(bullet)
-            }
-            else{
-                if(this.isCollisionDetected(bullet.collisionRect, this.shadowCollisionRect)){
-                    let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
-                    let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
-                    let bulletBlast : ICollisionRect = {x: bulletBlastX, y: bulletBlastY, width: 24, height: 24}
-                    for(let neighbourEnemy of this.enemies){
-                        if(this.isCollisionDetected(bulletBlast, neighbourEnemy.collisionRect) && !this.enemyArrayIncludes(enemiesToDelete, neighbourEnemy)){
-                            enemiesToDelete.push(neighbourEnemy)
-                        }
-                    }
-                    this.shadowFreezeTime = Math.floor(Date.now()/2)*2
+        if(!this.isPlayerTakingDamage){
+            let bulletsToDelete : Bullet[] = []
+            let enemyBulletsToDelete : EnemyBullet[] = []
+            let enemiesToDelete : Enemy[] = []
+            for(let bullet of this.playerBullets){
+                if(bullet.collisionRect.x + bullet.collisionRect.width < 0 || bullet.collisionRect.x > 320 || bullet.collisionRect.y + bullet.collisionRect.height < 0 || bullet.collisionRect.y > 176){
                     bulletsToDelete.push(bullet)
-                    this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
                 }
                 else{
+                    if(this.isCollisionDetected(bullet.collisionRect, this.shadowCollisionRect)){
+                        let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
+                        let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
+                        let bulletBlast : ICollisionRect = {x: bulletBlastX, y: bulletBlastY, width: 24, height: 24}
+                        for(let neighbourEnemy of this.enemies){
+                            if(this.isCollisionDetected(bulletBlast, neighbourEnemy.collisionRect) && !this.enemyArrayIncludes(enemiesToDelete, neighbourEnemy)){
+                                enemiesToDelete.push(neighbourEnemy)
+                            }
+                        }
+                        this.shadowFreezeTime = Math.floor(Date.now()/2)*2
+                        bulletsToDelete.push(bullet)
+                        this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
+                    }
+                    else{
+                        for(let wall of this.currentRoom.wallCollisionRects){
+                            if(this.isCollisionDetected(bullet.collisionRect, wall)){
+                                let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
+                                let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
+                                
+                                bulletsToDelete.push(bullet)
+                                this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
+                                break
+                            }
+                        }
+                        if(!this.bulletArrayIncludes(bulletsToDelete, bullet)){
+                            for(let enemy of this.enemies){
+                                if(this.isCollisionDetected(bullet.collisionRect, enemy.collisionRect)){
+                                    let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
+                                    let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
+                                    let bulletBlast : ICollisionRect = {x: bulletBlastX, y: bulletBlastY, width: 24, height: 24}
+                                    for(let neighbourEnemy of this.enemies){
+                                        if(this.isCollisionDetected(bulletBlast, neighbourEnemy.collisionRect) && !this.enemyArrayIncludes(enemiesToDelete, neighbourEnemy)){
+                                            enemiesToDelete.push(neighbourEnemy)
+                                        }
+                                    }
+                                    bulletsToDelete.push(bullet)
+                                    this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
+                                    break
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            for(let enemyBullet of this.enemyBullets){
+                if(enemyBullet.x + 2 < 0 || enemyBullet.x > 320 || enemyBullet.y + 2 < 0 || enemyBullet.y > 176){
+                    enemyBulletsToDelete.push(enemyBullet)
+                }
+                else{
+                    let EBCollisionRect : ICollisionRect = {x: enemyBullet.x, y: enemyBullet.y, width: 2, height: 2}
+                    if(this.isCollisionDetected(EBCollisionRect, this.playerCollisionRect)){
+                        this.takeDamage()
+                        return
+                    }
                     for(let wall of this.currentRoom.wallCollisionRects){
-                        if(this.isCollisionDetected(bullet.collisionRect, wall)){
-                            let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
-                            let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
-                            
-                            bulletsToDelete.push(bullet)
-                            this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
+                        if(this.isCollisionDetected(EBCollisionRect, wall)){
+                            enemyBulletsToDelete.push(enemyBullet)
                             break
                         }
                     }
-                    if(!this.bulletArrayIncludes(bulletsToDelete, bullet)){
+                    if(!this.bulletArrayIncludes(enemyBulletsToDelete, enemyBullet)){
                         for(let enemy of this.enemies){
-                            if(this.isCollisionDetected(bullet.collisionRect, enemy.collisionRect)){
-                                let bulletBlastX : number = bullet.collisionRect.x + bullet.width/2 - 24/2
-                                let bulletBlastY : number = bullet.collisionRect.y + bullet.height/2 - 24/2
-                                let bulletBlast : ICollisionRect = {x: bulletBlastX, y: bulletBlastY, width: 24, height: 24}
-                                for(let neighbourEnemy of this.enemies){
-                                    if(this.isCollisionDetected(bulletBlast, neighbourEnemy.collisionRect) && !this.enemyArrayIncludes(enemiesToDelete, neighbourEnemy)){
-                                        enemiesToDelete.push(neighbourEnemy)
-                                    }
+                            if(this.isCollisionDetected(EBCollisionRect, enemy.collisionRect)){
+                                if(!this.enemyArrayIncludes(enemiesToDelete, enemy)){
+                                    enemiesToDelete.push(enemy)
                                 }
-                                bulletsToDelete.push(bullet)
-                                this.bulletsAnimations.push({startFrame: this.frame + 1, x: bulletBlastX, y: bulletBlastY})
+                                enemyBulletsToDelete.push(enemyBullet)
                                 break
                             }
                         }
                     }
                 }
             }
-        }
-        for(let enemyBullet of this.enemyBullets){
-            if(enemyBullet.x + 2 < 0 || enemyBullet.x > 320 || enemyBullet.y + 2 < 0 || enemyBullet.y > 176){
-                enemyBulletsToDelete.push(enemyBullet)
+            this.score += 5*enemiesToDelete.length
+            if(enemiesToDelete.length == this.enemies.length && enemiesToDelete.length > 0){
+                this.score += 200
+                this.playerSpeed *= 2
             }
-            else{
-                let EBCollisionRect : ICollisionRect = {x: enemyBullet.x, y: enemyBullet.y, width: 2, height: 2}
-                if(this.isCollisionDetected(EBCollisionRect, this.playerCollisionRect)){
-                    this.takeDamage()
-                    return
+            if(this.score > this.highScore){
+                this.highScore = this.score
+            }
+            let newEnemies : Enemy[] = []
+            for(let enemy of this.enemies){
+                if(!this.enemyArrayIncludes(enemiesToDelete, enemy)){
+                    newEnemies.push(enemy)
                 }
-                for(let wall of this.currentRoom.wallCollisionRects){
-                    if(this.isCollisionDetected(EBCollisionRect, wall)){
-                        enemyBulletsToDelete.push(enemyBullet)
-                        break
-                    }
+            }
+            this.enemies = newEnemies
+            let newBullets : Bullet[] = []
+            for(let bullet of this.playerBullets){
+                if(!this.bulletArrayIncludes(bulletsToDelete, bullet)){
+                    newBullets.push(bullet)
                 }
+            }
+            this.playerBullets = newBullets
+            let newEnemyBullets : EnemyBullet[] = []
+            for(let enemyBullet of this.enemyBullets){
                 if(!this.bulletArrayIncludes(enemyBulletsToDelete, enemyBullet)){
-                    for(let enemy of this.enemies){
-                        if(this.isCollisionDetected(EBCollisionRect, enemy.collisionRect)){
-                            if(!this.enemyArrayIncludes(enemiesToDelete, enemy)){
-                                enemiesToDelete.push(enemy)
-                            }
-                            enemyBulletsToDelete.push(enemyBullet)
-                            break
-                        }
-                    }
+                    newEnemyBullets.push(enemyBullet)
                 }
             }
+            this.enemyBullets = newEnemyBullets
         }
-        this.score += 5*enemiesToDelete.length
-        if(enemiesToDelete.length == this.enemies.length && enemiesToDelete.length > 0){
-            this.score += 200
-            this.playerSpeed *= 2
-        }
-        if(this.score > this.highScore){
-            this.highScore = this.score
-        }
-        let newEnemies : Enemy[] = []
-        for(let enemy of this.enemies){
-            if(!this.enemyArrayIncludes(enemiesToDelete, enemy)){
-                newEnemies.push(enemy)
-            }
-        }
-        this.enemies = newEnemies
-        let newBullets : Bullet[] = []
-        for(let bullet of this.playerBullets){
-            if(!this.bulletArrayIncludes(bulletsToDelete, bullet)){
-                newBullets.push(bullet)
-            }
-        }
-        this.playerBullets = newBullets
-        let newEnemyBullets : EnemyBullet[] = []
-        for(let enemyBullet of this.enemyBullets){
-            if(!this.bulletArrayIncludes(enemyBulletsToDelete, enemyBullet)){
-                newEnemyBullets.push(enemyBullet)
-            }
-        }
-        this.enemyBullets = newEnemyBullets
-        
-        if(this.canReallyAnimate())
+
+        if(!this.isPlayerTakingDamage && this.canReallyAnimate()){
             this.frame += 1
+            console.log(this.frame)
+        }
         this.animationFrame += 1
-        // console.log('aa')
         window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
@@ -489,33 +917,56 @@ export default class Game{
         this.enemies = []
         this.playerBullets = []
         this.enemyBullets = []
-        this.createEnemies(1)
+        this.createEnemies(0)
         this.placeKey()
         this.placeKeyHole()
+        this.placeItem()
         this.timeOfEnteringRoom = Date.now()
         this.roomsTraveledSinceInjured += 1
         console.log(this.roomsTraveledSinceInjured)
     }
-
     takeDamage(){
-        this.playerSpeed = this.basicSpeed
-        this.placeShadow()
-        if(this.playerLives ==  0){
-            this.die()
+        if(this.playerMovementsObject.goDown){
+            clearInterval(this.playerMovementsObject.goDown)
         }
-        else{
-            this.playerLives--
-            this.playerCollisionRect.x = this.lastStartPosition[0]
-            this.playerCollisionRect.y = this.lastStartPosition[1]
-            this.enemies = []
-            this.playerBullets = []
-            this.enemyBullets = []
-            this.createEnemies(1)
-            this.placeKey()
-            this.placeKeyHole()
-            this.timeOfEnteringRoom = Date.now()
+        if(this.playerMovementsObject.goUp){
+            clearInterval(this.playerMovementsObject.goUp)
         }
-        this.roomsTraveledSinceInjured = 1
+        if(this.playerMovementsObject.goLeft){
+            clearInterval(this.playerMovementsObject.goLeft)
+        }
+        if(this.playerMovementsObject.goRight){
+            clearInterval(this.playerMovementsObject.goRight)
+        }
+        this.playerDamageFrame = this.frame
+        this.isPlayerTakingDamage = true
+        setTimeout(()=>{
+            this.playerMovementsObject.goUp = null
+            this.playerMovementsObject.goDown = null
+            this.playerMovementsObject.goLeft = null
+            this.playerMovementsObject.goRight = null
+            this.isPlayerTakingDamage = false
+            this.playerSpeed = this.basicSpeed
+            this.placeShadow()
+            if(this.playerLives ==  0){
+                this.die()
+            }
+            else{
+                this.playerLives--
+                this.playerCollisionRect.x = this.lastStartPosition[0]
+                this.playerCollisionRect.y = this.lastStartPosition[1]
+                this.enemies = []
+                this.playerBullets = []
+                this.enemyBullets = []
+                this.createEnemies(0)
+                this.placeKey()
+                this.placeKeyHole()
+                this.placeItem()
+                this.timeOfEnteringRoom = Date.now()
+            }
+            this.roomsTraveledSinceInjured = 1
+            // window.requestAnimationFrame(()=>this.refreshScreen())
+        }, 500)
         window.requestAnimationFrame(()=>this.refreshScreen())
     }
 
@@ -525,6 +976,7 @@ export default class Game{
         // Reset keys
         this.keys = []
         this.roomsOfFoundKeys = []
+        this.roomsOfFoundItems = []
         // Reset keyholes
         for(let room of this.rooms){
             if(room.keyHoleColor != "" && room.wallCollisionRects[0].y != room.wallCollisionRects[room.wallCollisionRects.length - 1].y + room.wallCollisionRects[room.wallCollisionRects.length - 1].height){
@@ -778,7 +1230,7 @@ export default class Game{
             let isAbleToPlaceKey : boolean
             do{
                 isAbleToPlaceKey = true
-                this.keyCollisionRect = {x: Math.floor(Math.random() * (320 - 14)), y: Math.floor(Math.random() * (176 - 6)), width: 14, height: 6}
+                this.keyCollisionRect = {x: Math.floor(Math.random() * (320 - 20)), y: Math.floor(Math.random() * (176 - 8)), width: 20, height: 8}
                 for(let backgroundLine of this.roomBackground){
                     if(this.isCollisionDetected(this.keyCollisionRect, backgroundLine)){
                         isAbleToPlaceKey = false
@@ -802,8 +1254,8 @@ export default class Game{
             let isAbleToPlaceKeyHole : boolean
             do{
                 isAbleToPlaceKeyHole = true
-                let keyHoleX = Math.floor(320*Math.floor(Math.random()*5)/5 + 320/10 - 16/2)
-                let keyHoleY = Math.floor(176*Math.floor(Math.random()*3)/3 + 176/6 - 13/2)
+                let keyHoleX = Math.round(320*Math.floor(Math.random()*5)/5 + 320/10 - 16/2)
+                let keyHoleY = Math.round(176*Math.floor(Math.random()*3)/3 + 176/6 - 13/2)
                 this.keyHoleCollisionRect = {x: keyHoleX, y: keyHoleY, width: 16, height: 13}
                 for(let backgroundLine of this.roomBackground){
                     if(this.isCollisionDetected(this.keyHoleCollisionRect, backgroundLine)){
@@ -815,7 +1267,35 @@ export default class Game{
         }
     }
 
+    placeItem(){
+        if(this.currentRoom.collectableItem != ""){
+            let isAbleToPlaceItem : boolean
+            let itemX, itemY : number
+            do{
+                isAbleToPlaceItem = true
+                if(this.currentRoom.collectableItem == "potion"){
+                    itemX = Math.round(320*Math.floor(Math.random()*5)/5 + 320/10 - 13/2)
+                    itemY = Math.round(176*Math.floor(Math.random()*3)/3 + 176/6 - 12/2)
+                    this.collectableItemCollisionRect = {x: itemX, y: itemY, width: 13, height: 12}
+                }
+                else{
+                    itemX = Math.round(320*Math.floor(Math.random()*5)/5 + 320/10 - 17/2)
+                    itemY = Math.round(176*Math.floor(Math.random()*3)/3 + 176/6 - 18/2)
+                    this.collectableItemCollisionRect = {x: itemX, y: itemY, width: 17, height: 18}
+                }
+                for(let backgroungLine of this.roomBackground){
+                    if(this.isCollisionDetected(this.collectableItemCollisionRect, backgroungLine)){
+                        isAbleToPlaceItem = false
+                        break
+                    }
+                }
+            }while(!isAbleToPlaceItem)
+        }
+    }
+
     playerDetectAction(e : KeyboardEvent){
+        if(this.isPlayerTakingDamage)
+            return
         let key : String = e.key
 
         if(key == "Control"){
@@ -901,29 +1381,34 @@ export default class Game{
     }
 
     playerStopAction(e : KeyboardEvent){
+        
         let key : String = e.key
         if(key == "Control"){
             this.isFireModeOn = false
         }
-        else if(key == "ArrowDown"){
-            this.isGunLoaded = true
-            clearInterval(this.playerMovementsObject.goDown)
-            this.playerMovementsObject.goDown = null
-        }
-        else if(key == "ArrowUp"){
-            this.isGunLoaded = true
-            clearInterval(this.playerMovementsObject.goUp)
-            this.playerMovementsObject.goUp = null
-        }
-        else if(key == "ArrowRight"){
-            this.isGunLoaded = true
-            clearInterval(this.playerMovementsObject.goRight)
-            this.playerMovementsObject.goRight = null
-        }
-        else if(key == "ArrowLeft"){
-            this.isGunLoaded = true
-            clearInterval(this.playerMovementsObject.goLeft)
-            this.playerMovementsObject.goLeft = null
+        else{
+            if(this.isPlayerTakingDamage)
+                return
+            if(key == "ArrowDown"){
+                this.isGunLoaded = true
+                clearInterval(this.playerMovementsObject.goDown)
+                this.playerMovementsObject.goDown = null
+            }
+            else if(key == "ArrowUp"){
+                this.isGunLoaded = true
+                clearInterval(this.playerMovementsObject.goUp)
+                this.playerMovementsObject.goUp = null
+            }
+            else if(key == "ArrowRight"){
+                this.isGunLoaded = true
+                clearInterval(this.playerMovementsObject.goRight)
+                this.playerMovementsObject.goRight = null
+            }
+            else if(key == "ArrowLeft"){
+                this.isGunLoaded = true
+                clearInterval(this.playerMovementsObject.goLeft)
+                this.playerMovementsObject.goLeft = null
+            }
         }
     }
 
