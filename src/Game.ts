@@ -49,9 +49,7 @@ export default class Game{
     constructor(){
         this.startTime = Date.now()
         this.gameScreen = <HTMLCanvasElement> document.getElementById("gameScreen")
-        // this.gameScreen.style.width = document.body.style.width;
-        // this.gameScreen.style.height = document.body.style.height;
-        this.ctx = this.gameScreen.getContext('2d')
+        this.ctx = this.gameScreen.getContext("2d")
         this.ctx.imageSmoothingEnabled = false
 
         this.rooms.push(new Room(0, "black", "yellow", [
@@ -452,7 +450,7 @@ export default class Game{
             alert("Gratulacje!!! Wygrałeś")
             return
         }
-        this.ctx = this.gameScreen.getContext('2d')
+        this.ctx = this.gameScreen.getContext("2d")
         this.ctx.clearRect(0, 0, 320, 208)
 
         if(this.isPlayerTakingDamage){
@@ -483,8 +481,8 @@ export default class Game{
 
         // Draw shadow and detect collision with player
         if(this.currentRoom.id == this.rooms.length - 1){
-            let shadowImg = document.createElement('img')
-            shadowImg.src = './assets/enemies/shadow/0.png'
+            let shadowImg = document.createElement("img")
+            shadowImg.src = "./assets/enemies/shadow/0.png"
             let shadowX : number = Math.round(320/2 - 18/2)
             let shadowY : number = Math.round(176/2 - 15/2)
             this.ctx.drawImage(shadowImg, shadowX, shadowY)
@@ -511,15 +509,15 @@ export default class Game{
                 this.moveShadow()
             }
             
-            let shadowImg : HTMLImageElement = document.createElement('img')
+            let shadowImg : HTMLImageElement = document.createElement("img")
             if(isShadowFrozen){
-                shadowImg.src = './assets/enemies/shadow/frozen' + this.shadowFreezeTime%2 + '.png'
+                shadowImg.src = "./assets/enemies/shadow/frozen" + this.shadowFreezeTime%2 + ".png"
             }
             else if(isShadowInMmove){
-                shadowImg.src = './assets/enemies/shadow/' + this.frame%2 + '.png'
+                shadowImg.src = "./assets/enemies/shadow/" + this.frame%2 + ".png"
             }
             else{
-                shadowImg.src = './assets/enemies/shadow/0.png'
+                shadowImg.src = "./assets/enemies/shadow/0.png"
             }
             this.ctx.drawImage(shadowImg, this.shadowCollisionRect.x, this.shadowCollisionRect.y)
             if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.shadowCollisionRect, this.playerCollisionRect)){
@@ -530,8 +528,8 @@ export default class Game{
 
 
         // Draw background
-        let wallImg = document.createElement('img')
-        wallImg.src = './assets/background/' + this.currentRoom.bgColor + '.png'
+        let wallImg = document.createElement("img")
+        wallImg.src = "./assets/background/" + this.currentRoom.bgColor + ".png"
         for(let backgroundLine of this.roomBackground){
             for(let i = 0; i < backgroundLine.width; i += 8){
                 this.ctx.drawImage(wallImg, backgroundLine.x + i, backgroundLine.y)
@@ -580,8 +578,8 @@ export default class Game{
         let highScoreString : string = this.highScore.toString()
         for(let i = 0; i < highScoreString.length; i++){
             let digitString : string = highScoreString[i]
-            let digitImg : HTMLImageElement = document.createElement('img')
-            digitImg.src = './assets/highscoreDigits/' + digitString + '.png'
+            let digitImg : HTMLImageElement = document.createElement("img")
+            digitImg.src = "./assets/highscoreDigits/" + digitString + ".png"
             let digitX : number = 6*8 - (highScoreString.length - i)*8
             this.ctx.drawImage(digitImg, digitX, 2*8)
         }
@@ -594,8 +592,8 @@ export default class Game{
         let scoreString : string = this.score.toString()
         for(let i = 0; i < scoreString.length; i++){
             let digitString : string = scoreString[i]
-            let digitImg : HTMLImageElement = document.createElement('img')
-            digitImg.src = './assets/digits/' + digitString + '.png'
+            let digitImg : HTMLImageElement = document.createElement("img")
+            digitImg.src = "./assets/digits/" + digitString + ".png"
             let digitX : number = 6*8 - (scoreString.length - i)*8
             this.ctx.drawImage(digitImg, digitX, 4*8)
         }
@@ -605,8 +603,8 @@ export default class Game{
             this.ctx.fillStyle = `rgb(212,67,45)`
             this.ctx.fillRect(320 - 6*8, 8, 6*8, 6*8)
         }
-        let lifeImg = document.createElement('img')
-        lifeImg.src = './assets/playerLife.png'
+        let lifeImg = document.createElement("img")
+        lifeImg.src = "./assets/playerLife.png"
         for(let i = 1; i <= this.playerLives; i++){
             this.ctx.drawImage(lifeImg, 320 - 6*8 + (i - 1)%3*16, 8 + Math.floor((i - 1)/3)*16)
         }
@@ -618,48 +616,48 @@ export default class Game{
         }
         // - Keys
         if(this.keys.includes("red")){
-            let redKeyImage : HTMLImageElement = document.createElement('img')
-            redKeyImage.src = './assets/keys/red.png'
+            let redKeyImage : HTMLImageElement = document.createElement("img")
+            redKeyImage.src = "./assets/keys/red.png"
             this.ctx.drawImage(redKeyImage, 6*16 + 1, 176 + 1)
         }
         if(this.keys.includes("blue")){
-            let blueKeyImage : HTMLImageElement = document.createElement('img')
-            blueKeyImage.src = './assets/keys/blue.png'
+            let blueKeyImage : HTMLImageElement = document.createElement("img")
+            blueKeyImage.src = "./assets/keys/blue.png"
             this.ctx.drawImage(blueKeyImage, 7*16 + 1, 176 + 1)
         }
         if(this.keys.includes("orange")){
-            let orangeKeyImage : HTMLImageElement = document.createElement('img')
-            orangeKeyImage.src = './assets/keys/orange.png'
+            let orangeKeyImage : HTMLImageElement = document.createElement("img")
+            orangeKeyImage.src = "./assets/keys/orange.png"
             this.ctx.drawImage(orangeKeyImage, 8*16 + 1, 176 + 1)
         }
         // - Room info
-        let interfaceImage : HTMLImageElement = document.createElement('img')
-        interfaceImage.src = './assets/interface.png'
+        let interfaceImage : HTMLImageElement = document.createElement("img")
+        interfaceImage.src = "./assets/interface.png"
         this.ctx.drawImage(interfaceImage, 8 + 1, 176 + 8)
         // - Room number
         let roomString : string = this.currentRoom.id.toString()
         for(let i = 0; i < roomString.length; i++){
             let digitString : string = roomString[i]
-            let digitImg : HTMLImageElement = document.createElement('img')
-            digitImg.src = './assets/digits/' + digitString + '.png'
+            let digitImg : HTMLImageElement = document.createElement("img")
+            digitImg.src = "./assets/digits/" + digitString + ".png"
             let digitX : number = (7+i)*8
             this.ctx.drawImage(digitImg, digitX, 176 + 8)
         }
 
 
         // Draw player
-        let playerImg : HTMLImageElement = document.createElement('img')
+        let playerImg : HTMLImageElement = document.createElement("img")
         if(this.playerMovementsObject.goRight){
-            playerImg.src = './assets/player/right/' + (this.frame % 2) + '.png'
+            playerImg.src = "./assets/player/right/" + (this.frame % 2) + ".png"
         }
         else if(this.playerMovementsObject.goLeft){
-            playerImg.src = './assets/player/left/' + (this.frame % 2) + '.png'
+            playerImg.src = "./assets/player/left/" + (this.frame % 2) + ".png"
         }
         else if(this.playerMovementsObject.goUp || this.playerMovementsObject.goDown){
-            playerImg.src = './assets/player/vert/' + (this.frame % 2) + '.png'
+            playerImg.src = "./assets/player/vert/" + (this.frame % 2) + ".png"
         }
         else{
-            playerImg.src = './assets/player/still.png'
+            playerImg.src = "./assets/player/still.png"
         }
         this.ctx.drawImage(playerImg, this.playerCollisionRect.x, this.playerCollisionRect.y)
         
@@ -669,9 +667,6 @@ export default class Game{
             this.fireEnemyBullets()
         }
 
-        
-        // console.log('bb')
-
         // Draw enemies and detect their collisions with player
         for(let enemy of this.enemies){
             if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.playerCollisionRect, enemy.collisionRect)){
@@ -679,13 +674,11 @@ export default class Game{
                 return
             }
             else{
-                // this.ctx.fillStyle = enemy.color
-                // this.ctx.fillRect(enemy.collisionRect.x, enemy.collisionRect.y, enemy.collisionRect.width, enemy.collisionRect.height)
                 let enemyPhase : number = this.frame % 4
-                let enemyImg = document.createElement('img')
+                let enemyImg = document.createElement("img")
                 switch(enemy.type){
                     case 0:
-                        enemyImg.src = './assets/enemies/drone/' +  enemy.color + '/' + enemyPhase + '.png'
+                        enemyImg.src = "./assets/enemies/drone/" +  enemy.color + "/" + enemyPhase + ".png"
                         break
                     case 1:
                         let droidMovementPhase : number
@@ -695,10 +688,10 @@ export default class Game{
                             droidMovementPhase = enemyPhase%2 + 1
                         else
                             droidMovementPhase = enemyPhase%2*2
-                        enemyImg.src = './assets/enemies/droid/' + enemy.color + '/' + enemyPhase + '_' + droidMovementPhase + '.png'
+                        enemyImg.src = "./assets/enemies/droid/" + enemy.color + "/" + enemyPhase + "_" + droidMovementPhase + ".png"
                         break
                     default:
-                        enemyImg.src = './assets/enemies/jumper/' + enemyPhase + '.png'
+                        enemyImg.src = "./assets/enemies/jumper/" + enemyPhase + ".png"
                         break
                 }
                 this.ctx.drawImage(enemyImg, enemy.collisionRect.x, enemy.collisionRect.y)   
@@ -715,8 +708,8 @@ export default class Game{
         for(let bullet of this.playerBullets){
             if(!this.isPlayerTakingDamage && this.canReallyAnimate())
                 bullet.move()
-            let bulletImg = document.createElement('img')
-            bulletImg.src = './assets/bullets/' + bullet.type + '.png'
+            let bulletImg = document.createElement("img")
+            bulletImg.src = "./assets/bullets/" + bullet.type + ".png"
             if(bullet.type == "diagonal" || bullet.type == "diagonalInverted"){
                 this.ctx.drawImage(bulletImg, bullet.collisionRect.x - 1, bullet.collisionRect.y - 1)
             }
@@ -727,8 +720,8 @@ export default class Game{
 
         // Draw key and detect its collision with player
         if(this.currentRoom.keyColor != "" && !this.roomsOfFoundKeys.includes(this.currentRoom.id)){
-            let keyImage : HTMLImageElement= document.createElement('img')
-            keyImage.src = './assets/keys/' + this.currentRoom.keyColor + 'Big.png'
+            let keyImage : HTMLImageElement= document.createElement("img")
+            keyImage.src = "./assets/keys/" + this.currentRoom.keyColor + "Big.png"
             this.ctx.drawImage(keyImage, this.keyCollisionRect.x, this.keyCollisionRect.y)
             if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.playerCollisionRect, this.keyCollisionRect)){
                 this.keys.push(this.currentRoom.keyColor)
@@ -737,8 +730,8 @@ export default class Game{
         }
         // Draw keyhole and detect its collision with player
         else if(this.currentRoom.keyHoleColor != "" && this.currentRoom.wallCollisionRects[0].y == this.currentRoom.wallCollisionRects[this.currentRoom.wallCollisionRects.length - 1].y + this.currentRoom.wallCollisionRects[this.currentRoom.wallCollisionRects.length - 1].height){
-            let keyHoleImg : HTMLImageElement = document.createElement('img')
-            keyHoleImg.src = './assets/keyholes/' + this.currentRoom.keyHoleColor + '.png'
+            let keyHoleImg : HTMLImageElement = document.createElement("img")
+            keyHoleImg.src = "./assets/keyholes/" + this.currentRoom.keyHoleColor + ".png"
             this.ctx.drawImage(keyHoleImg, this.keyHoleCollisionRect.x, this.keyHoleCollisionRect.y)
             if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.playerCollisionRect, this.keyHoleCollisionRect) && this.keys.includes(this.currentRoom.keyHoleColor)){
                 let newKeys : string[] = []
@@ -762,8 +755,8 @@ export default class Game{
         }
         // Draw collectable item and detect its collision with player
         else if(this.currentRoom.collectableItem != "" && !this.roomsOfFoundItems.includes(this.currentRoom.id)){
-            let itemImage : HTMLImageElement= document.createElement('img')
-            itemImage.src = './assets/collectableItems/' + this.currentRoom.collectableItem + "" + this.frame%2 + '.png'
+            let itemImage : HTMLImageElement= document.createElement("img")
+            itemImage.src = "./assets/collectableItems/" + this.currentRoom.collectableItem + "" + this.frame%2 + ".png"
             this.ctx.drawImage(itemImage, this.collectableItemCollisionRect.x, this.collectableItemCollisionRect.y)
             if(!this.isPlayerTakingDamage && this.isCollisionDetected(this.playerCollisionRect, this.collectableItemCollisionRect)){
                 let giftOption : number
@@ -794,8 +787,8 @@ export default class Game{
         let newBulletsAnimations : any[] = []
         for(let bulletAnimation of this.bulletsAnimations){
             if(this.frame - bulletAnimation.startFrame < 4){
-                let bulletAnimationImage : HTMLImageElement = document.createElement('img')
-                bulletAnimationImage.src = './assets/bulletExplosions/' + (this.frame - bulletAnimation.startFrame) + '.png'
+                let bulletAnimationImage : HTMLImageElement = document.createElement("img")
+                bulletAnimationImage.src = "./assets/bulletExplosions/" + (this.frame - bulletAnimation.startFrame) + ".png"
                 this.ctx.drawImage(bulletAnimationImage, bulletAnimation.x, bulletAnimation.y)
                 newBulletsAnimations.push(bulletAnimation)
             }
@@ -989,7 +982,6 @@ export default class Game{
                 this.timeOfEnteringRoom = Date.now()
             }
             this.roomsTraveledSinceInjured = 1
-            // window.requestAnimationFrame(()=>this.refreshScreen())
         }, 500)
         window.requestAnimationFrame(()=>this.refreshScreen())
     }
@@ -1405,7 +1397,6 @@ export default class Game{
     }
 
     playerStopAction(e : KeyboardEvent){
-        
         let key : String = e.key
         if(key == "Control"){
             this.isFireModeOn = false
@@ -1479,7 +1470,6 @@ export default class Game{
                     // Start new movement
                     if(this.canEnemySeePlayer(enemy)){
                         // Choose direction
-                        // console.log('real move')
                         let distanceX : number = (this.playerCollisionRect.x + this.playerCollisionRect.width/2) - (enemy.collisionRect.x + enemy.collisionRect.width/2)
                         let distanceY : number = (this.playerCollisionRect.y + this.playerCollisionRect.height/2) - (enemy.collisionRect.y + enemy.collisionRect.height/2)
                         if(Math.abs(distanceX) > Math.abs(distanceY)){
@@ -1491,7 +1481,6 @@ export default class Game{
                     }
                     else{
                         // Random direction
-                        // console.log('random move')
                         let randOfFour : number = Math.floor(Math.random() * 4)
                         if(randOfFour%2 == 0){
                             enemy.movementObject.forceX = randOfFour-1
@@ -1574,16 +1563,10 @@ export default class Game{
                 }
                 
                 if(Math.abs(horizontalDistance) > Math.abs(verticalDistance) && Math.abs(horizontalDistance) >= enemy.speed){
-                    // if(Math.abs(horizontalDistance) >= enemy.speed)
-                        enemy.collisionRect.x += (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x) * enemy.speed
-                    // else
-                    //     enemy.collisionRect.x += Math.floor(horizontalDistance)
+                    enemy.collisionRect.x += (this.playerCollisionRect.x - enemy.collisionRect.x)/Math.abs(this.playerCollisionRect.x - enemy.collisionRect.x) * enemy.speed
                 }
                 else if(Math.abs(verticalDistance) >= enemy.speed){
-                    // if(Math.abs(verticalDistance) >= enemy.speed)
-                        enemy.collisionRect.y += (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y) * enemy.speed
-                    // else
-                    //     enemy.collisionRect.y += Math.floor(verticalDistance)
+                    enemy.collisionRect.y += (this.playerCollisionRect.y - enemy.collisionRect.y)/Math.abs(this.playerCollisionRect.y - enemy.collisionRect.y) * enemy.speed
                 }    
             }
         }
@@ -1596,7 +1579,6 @@ export default class Game{
                 if(bulletDirections){
                     let newEnemyBullet = new EnemyBullet(this.bulletsFired, bulletDirections.x, bulletDirections.y, bulletDirections.movementForceX, bulletDirections.movementForceY)
                     this.enemyBullets.push(newEnemyBullet)
-                    // console.log(newEnemyBullet)
                     this.bulletsFired += 1
                 }
             }
@@ -1784,8 +1766,6 @@ export default class Game{
         }
         return false
     }
-
-
 
     canReallyAnimate(){
         return this.animationFrame%6 == 0

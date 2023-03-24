@@ -1,9 +1,0 @@
-- dziury na klucze (czy otwierające się ściany zawsze są pionowe???)[ponowne wracanie ściany]
-- klucze (kolory)
-
-- mechanika shadow'a (15 sekund, środek do środka)[dokończyć rysowanie za tłem]
-- EnemyBullet - osobna klasa
-- przeciwnicy strzelają w trzecim pomieszczeniu po ostatniej utracie życia (liczy się chodzenie tam i z powrotem)
-
-- poprawić kolizje na graczu (tablica ICollisionRect, zmiana playerCollisionRect na podstawie playerMovementsObject przed analizą wszelkich kolizji z graczem)
-- poprawić ruchy przeciwników (dosuwanie do ścian)

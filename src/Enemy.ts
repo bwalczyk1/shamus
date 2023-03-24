@@ -13,12 +13,11 @@ export default class Enemy{
         let availableColors : string[]
         switch(type){
             case 0:
-                availableColors = ["red", 'green', 'blue', 'white']
+                availableColors = ["red", "green", "blue", "white"]
                 this.speed = 3
                 break
             case 1:
                 availableColors = ["yellow", "cyan", "white"]
-                //availableColors = ["yellow", "cyan", 'white']
                 this.speed = 2
                 break
             default:
